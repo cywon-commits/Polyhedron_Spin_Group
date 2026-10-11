@@ -32,18 +32,26 @@ _YL, _YM, _YSC, _YC, _YP = _build_table()  # 24 real harmonics l=1..4
 
 @njit(cache=True)
 def _harmonics(x, y, z, yl, ym, ysc, yc, yp, out):
-    cm = np.empty(5)
-    sm = np.empty(5)
-    cm[0], sm[0] = 1.0, 0.0
-    for m in range(1, 5):
-        cm[m] = cm[m - 1] * x - sm[m - 1] * y
-        sm[m] = sm[m - 1] * x + cm[m - 1] * y
+    # powers of (x + i y) by recurrence in scalars (no allocation in the hot loop)
+    c1, s1 = x, y
+    c2, s2 = c1 * x - s1 * y, s1 * x + c1 * y
+    c3, s3 = c2 * x - s2 * y, s2 * x + c2 * y
+    c4, s4 = c3 * x - s3 * y, s3 * x + c3 * y
     for k in range(yl.shape[0]):
         poly = 0.0
         for c in range(4, -1, -1):
             poly = poly * z + yp[k, c]
         m = ym[k]
-        trig = sm[m] if ysc[k] == 1 else cm[m]
+        if m == 0:
+            trig = 1.0
+        elif m == 1:
+            trig = s1 if ysc[k] == 1 else c1
+        elif m == 2:
+            trig = s2 if ysc[k] == 1 else c2
+        elif m == 3:
+            trig = s3 if ysc[k] == 1 else c3
+        else:
+            trig = s4 if ysc[k] == 1 else c4
         out[k] = yc[k] * poly * trig
 
 

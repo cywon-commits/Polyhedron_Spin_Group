@@ -39,7 +39,7 @@ def thermo(r, nblocks=20):
             out["m"][t, l], out["m_err"][t, l] = block_error(m, nblocks)
             out["chi"][t, l] = N * b * (np.mean(m ** 2) - np.mean(m) ** 2)
             out["binder"][t, l], out["binder_err"][t, l] = jackknife(binder, m, nblocks)
-    out["tau"] = r["tau"]
+    out["tau"] = r["tau"] * r["meas_every"]            # integrated autocorrelation time in sweeps
     return out
 
 

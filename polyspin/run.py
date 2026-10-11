@@ -37,12 +37,12 @@ from .model import Params, tetrahedron
 from .pt import ParallelTempering
 
 DEFAULTS = dict(
-    sampling=dict(n_equil=20000, n_meas=20000, sweeps_per_exchange=1, meas_every=1, diag_every=100,
+    sampling=dict(n_equil=20000, n_meas=20000, sweeps_per_exchange=1, meas_every=5, diag_every=500,
                   tune_every=200, checkpoint_minutes=20),
     init="random", seed=1, overlap_move=True, kappa=20.0,
     diagnostics=dict(shape_thr=0.95, correlators=True,
                      defects=dict(holonomy="auto", z2="auto", skyrmion="auto", margin_thr=0.15,
-                                  block_k=[2, 3], res_thr=0.35, match_thr=0.9)),
+                                  block_k=[2, 3], res_thr=0.35, match_thr=0.9, stride=1)),
 )
 
 

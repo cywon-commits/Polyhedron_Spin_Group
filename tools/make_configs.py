@@ -41,7 +41,8 @@ def main():
     ap.add_argument("--n", type=int, default=48)
     ap.add_argument("--equil", type=int, default=20000)
     ap.add_argument("--meas", type=int, default=20000)
-    ap.add_argument("--diag-every", type=int, default=200)
+    ap.add_argument("--diag-every", type=int, default=500)
+    ap.add_argument("--meas-every", type=int, default=5)
     ap.add_argument("--suffix", default="")
     ap.add_argument("--init", default="random")
     ap.add_argument("--seed", type=int, default=1)
@@ -49,7 +50,7 @@ def main():
     out = Path(a.outdir)
     out.mkdir(parents=True, exist_ok=True)
     T = dict(Tmin=a.Tmin, Tmax=a.Tmax, n=a.n, spacing="log")
-    S = dict(n_equil=a.equil, n_meas=a.meas, sweeps_per_exchange=1, meas_every=1,
+    S = dict(n_equil=a.equil, n_meas=a.meas, sweeps_per_exchange=1, meas_every=a.meas_every,
              diag_every=a.diag_every, tune_every=200, checkpoint_minutes=20)
     for cut in a.cuts:
         for v in CUTS[cut][2]:
