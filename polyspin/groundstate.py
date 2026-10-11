@@ -162,3 +162,22 @@ def phi_prime1(kappa):
     """Phi'(1) = sum_l kappa_l l(l+1)/2: slope of the pair function at full overlap.
     The all-parallel (F) state is locally stable against continuous splitting iff < 0."""
     return float(sum(k * l * (l + 1) / 2 for l, k in zip((1, 2, 3, 4), kappa)))
+
+
+def boundary_CD(J, K, zH4):
+    """zG on the continuous C-D boundary, from Phi'(-1) = k1 - 3k2 + 6k3 - 10k4 = 0
+    (collinear dimers become unstable to bending): zG = (J - 2K + 4 zH4)/3."""
+    return (J - 2 * K + 4 * zH4) / 3
+
+
+def boundary_DF(J, K):
+    """zG on the first-order D-F boundary at zH4 = 0 (kappa4 = 0): root of
+    k1 + 3/4 k2 + 3/8 k3 - 9 k2^2/(40 k3) = 0 with k1 = J - 3g/5, k2 = 2K/3, k3 = -2g/5.
+    Multiplying out gives a quadratic in g; returns the root > 0 that lies above C-D."""
+    from scipy.optimize import brentq
+
+    def h(g):
+        k1, k2, k3 = J - 0.6 * g, 2 * K / 3, -0.4 * g
+        return k1 + 0.75 * k2 + 0.375 * k3 - 9 * k2 ** 2 / (40 * k3)
+
+    return brentq(h, boundary_CD(J, K, 0.0) + 1e-6, 3.0 * J)

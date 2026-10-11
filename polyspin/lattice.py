@@ -44,5 +44,26 @@ class Lattice:
             out.append(np.stack([a, b, c, d], axis=1))
         return np.concatenate(out).astype(np.int64)
 
+    def shifted(self, du, dv, u, v):
+        """Index of the site displaced by (du along axis u, dv along axis v) for every site."""
+        c = self.coords.copy()
+        c[:, u] = (c[:, u] + du) % self.size
+        c[:, v] = (c[:, v] + dv) % self.size
+        strides = np.array([self.size ** k for k in range(self.dim)])
+        return c @ strides
+
+    def block_loops(self, k):
+        """Closed counter-clockwise loops around every (2k x 2k)-site block, one per site and
+        coordinate plane (the site is the block's lower-left corner).  Length 8k - 4; k = 1 is the
+        plaquette list."""
+        n = 2 * k
+        path = ([(i, 0) for i in range(n - 1)] + [(n - 1, j) for j in range(n - 1)]
+                + [(n - 1 - i, n - 1) for i in range(n - 1)] + [(0, n - 1 - j) for j in range(n - 1)])
+        planes = [(0, 1)] if self.dim == 2 else [(0, 1), (1, 2), (2, 0)]
+        out = []
+        for u, v in planes:
+            out.append(np.stack([self.shifted(du, dv, u, v) for du, dv in path], axis=1))
+        return np.concatenate(out).astype(np.int64)
+
     def site_index(self, *xyz):
         return int(sum(c * self.size ** k for k, c in enumerate(xyz)))

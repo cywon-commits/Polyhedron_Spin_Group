@@ -89,3 +89,26 @@ def majority_phase(spins, thr=0.95):
     labels, _ = cluster_shapes(spins, thr)
     vals, counts = np.unique(labels, return_counts=True)
     return vals[np.argmax(counts)], dict(zip(vals, counts / len(labels)))
+
+
+def global_class(m, m_thr):
+    """Coarse phase label from the global order parameters m_1..m_4 only (no per-cluster
+    thresholds, which are unstable near continuous transitions such as C-D).
+
+    m_thr should lie above the finite-size noise floor ~ 1/sqrt(N n).
+      F  : m1 ~ 1   (m1 > 0.9)
+      M  : m1 > m_thr, not F  (U or D: net moment; U vs D needs the shape diagnostics)
+      C  : m1, m3 < m_thr and m2 > m_thr   (nematic, odd channels vanish)
+      T  : m1, m2 < m_thr and (m3 or m4) > m_thr
+      0  : everything below m_thr (disordered)
+    """
+    m1, m2, m3, m4 = m
+    if m1 > 0.9:
+        return "F"
+    if m1 > m_thr:
+        return "M"
+    if m2 > m_thr and m3 < m_thr:
+        return "C"
+    if m2 < m_thr and (m3 > m_thr or m4 > m_thr):
+        return "T"
+    return "0"

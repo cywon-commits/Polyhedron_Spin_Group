@@ -101,11 +101,17 @@ class FrameGroup:
         self.order_G = len(self.rotations)
         self._build_tables(naming_tol)
 
-    def nearest(self, q):
-        """Index of nearest 2G element for quaternions (...,4); returns (idx, overlap)."""
+    def nearest(self, q, margin=False):
+        """Index of nearest 2G element for quaternions (...,4); returns (idx, overlap)
+        or, with margin=True, (idx, overlap, margin) where margin = best overlap minus the
+        runner-up (a different 2G element)."""
         dots = q @ self.quats.T
         idx = dots.argmax(-1)
-        return idx, np.take_along_axis(dots, idx[..., None], -1)[..., 0]
+        best = np.take_along_axis(dots, idx[..., None], -1)[..., 0]
+        if not margin:
+            return idx, best
+        part = np.partition(dots, -2, axis=-1)
+        return idx, best, best - part[..., -2]
 
     def _build_tables(self, tol):
         m = len(self.quats)
@@ -174,52 +180,103 @@ def fit_orientations(spins, group: FrameGroup):
     return R[ar, best], res[ar, best], best
 
 
-def holonomy(q, loops, group: FrameGroup, match_thr=0.9):
-    """Conjugacy class id of the holonomy around each closed site loop.
+MARGIN_THR = 0.25  # see docs/M3_prep_report.md for the trade-off behind this default
+
+
+def holonomy_full(q, loops, group: FrameGroup, match_thr=0.9, margin_thr=MARGIN_THR):
+    """Holonomy classes with reliability information.
 
     q      (N,4) orientation quaternions (sign arbitrary)
     loops  (P,m) site indices; the loop closes from the last site to the first
-    Returns (class_id (P,), min link overlap (P,)); class_id = UNDEFINED where any
-    link overlap < match_thr.
+    Returns dict:
+      cls        (P,) conjugacy-class id, UNDEFINED where any link overlap < match_thr
+      overlap    (P,) minimum link overlap (best element)
+      margin     (P,) minimum link margin (best minus runner-up overlap)
+      ambiguous  (P,) bool, margin < margin_thr (and not undefined): rounding of at least one
+                 link is not decisive, the class may be wrong
+      link_margin (P,m) per-link margins
     """
     nxt = np.roll(loops, -1, axis=1)
     rel = qmul(qconj(q[loops]), q[nxt])            # (P,m,4)
-    h, ov = group.nearest(rel)                      # (P,m)
+    h, ov, mg = group.nearest(rel, margin=True)    # (P,m)
     acc = h[:, 0].copy()
     for k in range(1, loops.shape[1]):
         acc = group.mult[acc, h[:, k]]
     cls = group.class_of[acc]
-    minov = ov.min(1)
-    cls = np.where(minov < match_thr, UNDEFINED, cls)
-    return cls, minov
+    minov, minmg = ov.min(1), mg.min(1)
+    undefined = minov < match_thr
+    cls = np.where(undefined, UNDEFINED, cls)
+    return dict(cls=cls, overlap=minov, margin=minmg,
+                ambiguous=(minmg < margin_thr) & ~undefined, link_margin=mg)
 
 
-def detect(spins, plaquettes, group: FrameGroup, res_thr=0.35, match_thr=0.9):
+def holonomy(q, loops, group: FrameGroup, match_thr=0.9):
+    """(class id, min link overlap); see ``holonomy_full`` for margins and ambiguity."""
+    r = holonomy_full(q, loops, group, match_thr)
+    return r["cls"], r["overlap"]
+
+
+def detect(spins, plaquettes, group: FrameGroup, res_thr=0.35, match_thr=0.9,
+           margin_thr=MARGIN_THR, loops=None):
     """Full pipeline on a spin configuration.
 
-    Returns dict(cls (P,), undefined (P,) bool, residual (N,), overlap (P,), q (N,4)).
-    A plaquette is undefined if one of its clusters has fit residual > res_thr or any
-    link overlap < match_thr.
+    Every loop (default: the plaquettes) ends up in exactly one of three states:
+      undefined  fit residual of one of its clusters > res_thr or a link overlap < match_thr
+      ambiguous  defined, but a link margin < margin_thr (class unreliable)
+      reliable   everything else
+    Returns dict(cls (P,), undefined, ambiguous, reliable (P,) bool, residual (N,),
+    overlap (P,), margin (P,), link_ambiguous_fraction, q (N,4)).
     """
+    loops = plaquettes if loops is None else loops
     R, resid, _ = fit_orientations(spins, group)
     q = mat_to_quat(R)
-    cls, ov = holonomy(q, plaquettes, group, match_thr)
-    bad = (resid[plaquettes] > res_thr).any(1)
-    cls = np.where(bad, UNDEFINED, cls)
-    return dict(cls=cls, undefined=cls == UNDEFINED, residual=resid, overlap=ov, q=q)
+    r = holonomy_full(q, loops, group, match_thr, margin_thr)
+    bad = (resid[loops] > res_thr).any(1)
+    cls = np.where(bad, UNDEFINED, r["cls"])
+    undefined = cls == UNDEFINED
+    ambiguous = r["ambiguous"] & ~undefined
+    return dict(cls=cls, undefined=undefined, ambiguous=ambiguous, reliable=~(undefined | ambiguous),
+                residual=resid, overlap=r["overlap"], margin=r["margin"], q=q,
+                link_ambiguous_fraction=float((r["link_margin"] < margin_thr).mean()))
 
 
-def census(cls, group: FrameGroup, n_sites=None):
-    """Counts per class, number undefined, and densities per site (3D: line length per
-    volume; 2D: defects per site)."""
-    out = {"undefined": int((cls == UNDEFINED).sum())}
-    for c, name in enumerate(group.class_names):
-        out[name] = int((cls == c).sum())
-    out["trivial"] = int((cls == group.class_of[group.identity]).sum())
-    out["P"] = len(cls)
+def reportable_classes(group: FrameGroup, max_angle_deg=180.0):
+    """Class ids whose SU(2) rotation angle is <= max_angle_deg.  Only these are resolvable on
+    a single plaquette (link step < ~60 deg): 1, 4, 6+- for 2T; 1, 4+- for Z4.  The 2 (2pi) and
+    3+- (240 deg) classes of 2T are not."""
+    return [c for c, m in enumerate(group.classes)
+            if np.degrees(group.rotation_angle(m[0])) <= max_angle_deg + 1e-6]
+
+
+def census(det, group: FrameGroup, n_sites=None):
+    """Defect census of a ``detect`` result.
+
+    Reliable plaquettes are counted per class (``counts``); ``reportable`` lists the classes
+    that may be quoted (1, 4, 6+- for 2T), the others are kept for completeness but must not be
+    used as densities.  ``undefined`` and ``ambiguous`` are counted separately.  Densities are
+    per site (2D: defects per site; 3D: defect-line length per volume, one unit per plaquette).
+    """
+    cls, rel = det["cls"], det["reliable"]
+    counts = {name: int(((cls == c) & rel).sum()) for c, name in enumerate(group.class_names)}
+    rep = [group.class_names[c] for c in reportable_classes(group)]
+    triv = group.class_names[group.class_of[group.identity]]
+    out = dict(counts=counts, reportable=rep, undefined=int(det["undefined"].sum()),
+               ambiguous=int(det["ambiguous"].sum()), P=len(cls),
+               link_ambiguous_fraction=det.get("link_ambiguous_fraction"))
     if n_sites:
-        out["density"] = {k: v / n_sites for k, v in out.items() if k not in ("P", "density")}
+        out["density"] = {k: v / n_sites for k, v in counts.items() if k != triv}
     return out
+
+
+def block_census(q, lattice, group: FrameGroup, k=2, **kw):
+    """Class distribution of the 2k x 2k block-boundary loops (diagnostic of how finely big
+    defects are split into small ones when compared with the plaquette census)."""
+    loops = lattice.block_loops(k)
+    r = holonomy_full(q, loops, group, **kw)
+    rel = ~(r["cls"] == UNDEFINED) & ~r["ambiguous"]
+    counts = {name: int(((r["cls"] == c) & rel).sum()) for c, name in enumerate(group.class_names)}
+    return dict(counts=counts, undefined=int((r["cls"] == UNDEFINED).sum()),
+                ambiguous=int(r["ambiguous"].sum()), P=len(loops))
 
 
 # ------------------------------------------------------- artificial vortices

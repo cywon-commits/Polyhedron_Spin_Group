@@ -114,3 +114,48 @@ def test_C_is_exactly_collinear():
     P = Params.from_z(0.7, 0.0, K=-0.5)  # just inside D (continuous onset near zG = 0.67)
     assert phase_of_gs(P)[0] == "D"
     assert phase_of_gs(Params.from_z(0.6, 0.0, K=-0.5))[0] == "C"
+
+
+# ------------------------------------------------- follow-up 3: analytic C-D and D-F boundaries
+from polyspin.groundstate import boundary_CD, boundary_DF  # noqa: E402
+
+
+def _moment(P):
+    return np.linalg.norm(phase_of_gs(P)[2].sum(0)) / 4
+
+
+def test_C_D_boundary_is_phi_prime_zero():
+    """zG = (J - 2K + 4 zH4)/3: C (M = 0) below, D (M > 0) above; Phi'(-1) = 0 on the line;
+    the moment grows like sqrt(zG - zG_c) (mean-field onset)."""
+    assert boundary_CD(1.0, -0.5, 0.0) == pytest.approx(2 / 3)
+    for K, zH in [(-0.5, 0.0), (-0.25, 0.25), (-0.75, 0.0), (-0.5, 0.1)]:
+        zGc = boundary_CD(1.0, K, zH)
+        k = channel_coeffs(Params.from_z(zGc, zH, K=K))[0]
+        assert abs(k[0] - 3 * k[1] + 6 * k[2] - 10 * k[3]) < 1e-12
+        assert _moment(Params.from_z(zGc - 0.01, zH, K=K)) < 1e-6
+        m1 = _moment(Params.from_z(zGc + 0.005, zH, K=K))
+        m2 = _moment(Params.from_z(zGc + 0.02, zH, K=K))
+        assert phase_of_gs(Params.from_z(zGc + 0.005, zH, K=K))[0] == "D"
+        assert m2 / m1 == pytest.approx(2.0, rel=0.05)
+
+
+def test_D_F_boundary():
+    """First-order D-F boundary at zH4 = 0: g^2 - g - 1/12 = 0 for K = -0.5 (zG = 1.0774)."""
+    assert boundary_DF(1.0, -0.5) == pytest.approx((1 + np.sqrt(1 + 1 / 3)) / 2, abs=1e-12)
+    for K in (-0.5, -0.75, -0.25):
+        g = boundary_DF(1.0, K)
+        assert phase_of_gs(Params.from_z(g - 0.01, 0.0, K=K))[0] == "D"
+        assert phase_of_gs(Params.from_z(g + 0.01, 0.0, K=K))[0] == "F"
+        # first order: net moment jumps (D -> F)
+        assert _moment(Params.from_z(g - 0.01, 0.0, K=K)) < 0.6
+
+
+def test_global_classification():
+    from polyspin.observables import global_class, m_l
+    from polyspin.lattice import Lattice
+    from polyspin.model import tetrahedron
+    lat = Lattice(2, 4)
+    up = np.array([0, 0, 1.0])
+    for S, exp in [(tetrahedron(), "T"), (np.array([up, up, -up, -up]), "C"), (np.array([up] * 4), "F"),
+                   (phase_of_gs(Params.from_z(0.9, 0.0, K=-0.5))[2], "M")]:
+        assert global_class(m_l(np.tile(S, (lat.N, 1, 1))), 0.05) == exp
