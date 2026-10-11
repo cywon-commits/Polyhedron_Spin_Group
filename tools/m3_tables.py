@@ -44,7 +44,7 @@ def trial_table(d):
         th = thermo(r)
         ic = int(np.argmax(th["c"]))
         print(f"| {r['attrs']['name']} | {len(r['T'])} | {int(r['attrs']['sweeps'])} | {r['swap'].min():.3f} | "
-              f"{np.median(r['swap']):.2f} | {r['round_trips']} | {r['tau'][:, 0].max():.0f} | {r['tau'][:, 1:].max():.0f} | "
+              f"{np.median(r['swap']):.2f} | {r['round_trips']} | {r['tau'][:, 0].max() * r['meas_every']:.0f} | {r['tau'][:, 1:].max() * r['meas_every']:.0f} | "
               f"{r['T'][ic]:.3f} | {th['c'][ic]:.0f} | {r['attrs']['wall_seconds'] / 60:.1f} |")
 
 
