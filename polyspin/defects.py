@@ -241,8 +241,9 @@ def detect(spins, plaquettes, group: FrameGroup, res_thr=0.35, match_thr=0.9,
     cls = np.where(bad, UNDEFINED, r["cls"])
     undefined = cls == UNDEFINED
     ambiguous = r["ambiguous"] & ~undefined
-    return dict(cls=cls, undefined=undefined, ambiguous=ambiguous, reliable=~(undefined | ambiguous),
-                residual=resid, overlap=r["overlap"], margin=r["margin"], q=q,
+    return dict(cls=cls, raw_cls=group.class_of[r["elem"]], undefined=undefined, ambiguous=ambiguous,
+                reliable=~(undefined | ambiguous), residual=resid, overlap=r["overlap"],
+                margin=r["margin"], q=q, loops=loops,
                 link_ambiguous_fraction=float((r["link_margin"] < margin_thr).mean()))
 
 
@@ -357,6 +358,24 @@ def block_from_plaquettes(lattice, h, group: FrameGroup, a0, m, n, plane=(0, 1))
     for e in reversed(cols):                              # ccw: later columns stand to the left
         W = mult[W, e]
     return W
+
+
+def scan_detector(det, group: FrameGroup, combos):
+    """Detector-threshold scan.  For each (res_thr, match_thr, margin_thr) recompute from a ``detect``
+    result which loops are undefined (fit residual of a member cluster > res_thr or link overlap <
+    match_thr), ambiguous (margin < margin_thr) and reliable, and count reliable loops per class.
+    Returns an array (len(combos), n_classes + 2): class counts, then ambiguous, then undefined."""
+    nc = group.n_classes
+    out = np.zeros((len(combos), nc + 2))
+    resid_loop = det["residual"][det["loops"]].max(1)
+    for i, (rt, mt, gt) in enumerate(combos):
+        und = (resid_loop > rt) | (det["overlap"] < mt)
+        amb = (det["margin"] < gt) & ~und
+        rel = ~und & ~amb
+        for c in range(nc):
+            out[i, c] = ((det["raw_cls"] == c) & rel).sum()
+        out[i, nc], out[i, nc + 1] = amb.sum(), und.sum()
+    return out
 
 
 def margin_scan(det, group: FrameGroup, thresholds=(0.15, 0.2, 0.25)):

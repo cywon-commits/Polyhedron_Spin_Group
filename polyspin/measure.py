@@ -27,7 +27,10 @@ def measure_m(spins):
     return m_l_all(spins, O._YL, O._YM, O._YSC, O._YC, O._YP)
 
 
-BLOCK_SCAN_THR = (0.15, 0.2, 0.25)
+# detector-threshold scan recorded for every run: (fit-residual cut, link-overlap cut, margin cut)
+SCAN_COMBOS = ((0.35, 0.9, 0.15), (0.35, 0.9, 0.25), (0.5, 0.9, 0.15), (0.5, 0.7, 0.15),
+               (0.7, 0.7, 0.15), (0.7, 0.5, 0.15))
+BLOCK_SCAN_THR = SCAN_COMBOS   # kept for the HDF5 attribute name
 
 
 class Diagnostics:
@@ -44,6 +47,9 @@ class Diagnostics:
         self.match_thr = dcfg.get("match_thr", 0.9)
         self.block_k = list(dcfg.get("block_k", [2, 3]))
         self.z2_lam_thr = dcfg.get("z2_collinearity_thr", 0.5)
+        # defect detection is the expensive part of a diagnostic sample; with stride s it is evaluated
+        # only at temperature indices t % s == 0 (counted separately in n_def)
+        self.defect_stride = int(dcfg.get("stride", 1))
         self.group = None
         ref = dcfg.get("holonomy_ref")
         if ref is not None:
@@ -52,6 +58,7 @@ class Diagnostics:
         self.do_sky = bool(dcfg.get("skyrmion", False)) and lattice.dim == 2
         L = lattice.size
         self.n_diag = np.zeros(R)
+        self.n_def = np.zeros(R)
         self.split = np.zeros((R, 5))
         self.A_sum = np.zeros((R, 4))
         self.A_hist = np.zeros((R, 4, 32))
@@ -69,7 +76,8 @@ class Diagnostics:
             self.h_und = np.zeros(R)
             self.h_linkamb = np.zeros(R)
             self.h_resid = np.zeros(R)
-            self.h_scan = np.zeros((R, len(BLOCK_SCAN_THR), nc + 2))   # classes, ambiguous, undefined
+            self.h_scan = np.zeros((R, len(SCAN_COMBOS), nc + 2))   # classes, ambiguous, undefined
+            self.h_resid_hist = np.zeros((R, 40))                    # per-cluster fit residual, [0, 1.2]
             self.b_counts = {k: np.zeros((R, nc)) for k in self.block_k}
             self.b_amb = {k: np.zeros(R) for k in self.block_k}
             self.b_und = {k: np.zeros(R) for k in self.block_k}
@@ -111,6 +119,9 @@ class Diagnostics:
         if self.do_corr:
             self.corr[t] += O.correlators(spins, self.lat)
         lat = self.lat
+        if t % self.defect_stride:
+            return
+        self.n_def[t] += 1
         if self.group is not None:
             g = self.group
             det = D.detect(spins, lat.plaquettes, g, self.res_thr, self.match_thr, self.margin_thr)
@@ -121,11 +132,8 @@ class Diagnostics:
             self.h_und[t] += det["undefined"].sum()
             self.h_linkamb[t] += det["link_ambiguous_fraction"]
             self.h_resid[t] += det["residual"].mean()
-            sc = D.margin_scan(det, g, BLOCK_SCAN_THR)
-            for i, thr in enumerate(BLOCK_SCAN_THR):
-                self.h_scan[t, i, :g.n_classes] += [sc[thr]["counts"][nm] for nm in g.class_names]
-                self.h_scan[t, i, g.n_classes] += sc[thr]["ambiguous"]
-                self.h_scan[t, i, g.n_classes + 1] += sc[thr]["undefined"]
+            self.h_scan[t] += D.scan_detector(det, g, SCAN_COMBOS)
+            self.h_resid_hist[t] += np.histogram(det["residual"], bins=40, range=(0, 1.2))[0] / lat.N
             triv = g.class_of[g.identity]
             nontriv = np.flatnonzero(rel & (cls != triv) & np.isin(cls, D.reportable_classes(g)))
             self.h_pair[t] += self._pair_hist(nontriv)
@@ -149,11 +157,12 @@ class Diagnostics:
 
     # ---------------------------------------------------------------- io
     def arrays(self):
-        out = {k: getattr(self, k) for k in ("n_diag", "split", "A_sum", "A_hist", "M_hist", "lam_hist",
-                                             "lam_sum", "corr")}
+        out = {k: getattr(self, k) for k in ("n_diag", "n_def", "split", "A_sum", "A_hist", "M_hist",
+                                             "lam_hist", "lam_sum", "corr")}
         if self.group is not None:
             out.update(h_counts=self.h_counts, h_amb=self.h_amb, h_und=self.h_und, h_linkamb=self.h_linkamb,
-                       h_resid=self.h_resid, h_scan=self.h_scan, h_pair=self.h_pair)
+                       h_resid=self.h_resid, h_scan=self.h_scan, h_pair=self.h_pair,
+                       h_resid_hist=self.h_resid_hist)
             for k in self.block_k:
                 out[f"b{k}_counts"], out[f"b{k}_amb"] = self.b_counts[k], self.b_amb[k]
                 out[f"b{k}_und"], out[f"b{k}_frac"] = self.b_und[k], self.b_frac[k]

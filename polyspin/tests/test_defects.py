@@ -419,3 +419,23 @@ def test_margin_scan_is_monotone():
     assert amb == sorted(amb) and amb[0] == 0
     for t, s in sc.items():
         assert s["ambiguous"] + sum(s["counts"].values()) + s["undefined"] == lat.N
+
+
+def test_scan_detector_reproduces_detect_and_is_monotone():
+    rng = np.random.default_rng(12)
+    g = D.FrameGroup(reference("T"))
+    lat = Lattice(2, 10)
+    spins = D.spins_from_quats(_random_q(lat, g, rng, 1.0), g.ref)
+    spins = spins + 0.12 * rng.normal(size=spins.shape)              # cluster shape noise
+    spins /= np.linalg.norm(spins, axis=-1, keepdims=True)
+    combos = ((0.35, 0.9, 0.15), (0.5, 0.9, 0.15), (0.7, 0.7, 0.15), (0.7, 0.5, 0.15))
+    for rt, mt, gt in combos:
+        det = D.detect(spins, lat.plaquettes, g, res_thr=rt, match_thr=mt, margin_thr=gt)
+        sc = D.scan_detector(det, g, [(rt, mt, gt)])[0]
+        nc = g.n_classes
+        assert int(sc[nc]) == int(det["ambiguous"].sum()) and int(sc[nc + 1]) == int(det["undefined"].sum())
+        for c in range(nc):
+            assert int(sc[c]) == int(((det["cls"] == c) & det["reliable"]).sum())
+    det = D.detect(spins, lat.plaquettes, g, res_thr=1.0, match_thr=0.0, margin_thr=0.0)
+    und = [D.scan_detector(det, g, [c])[0][-1] for c in combos]
+    assert und == sorted(und, reverse=True)                              # looser cuts -> fewer undefined

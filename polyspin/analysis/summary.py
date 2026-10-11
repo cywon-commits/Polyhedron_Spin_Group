@@ -46,8 +46,12 @@ def thermo(r, nblocks=20):
 def diag_means(r):
     """Normalise the accumulated diagnostics by the number of samples per temperature."""
     d, n = r["diag"], r["diag"]["n_diag"][:, None]
-    out = dict(split=d["split"] / n, A=d["A_sum"] / n, lam=d["lam_sum"] / n[:, 0],
-               M_hist=d["M_hist"] / n, corr=d["corr"][:, :, :] / n[:, :, None])
+    n_all = n
+    n = d["n_def"][:, None] if "n_def" in d else n          # defect diagnostics: samples actually taken
+    n = np.where(n == 0, np.nan, n)
+    n_all = n_all
+    out = dict(split=d["split"] / n_all, A=d["A_sum"] / n_all, lam=d["lam_sum"] / n_all[:, 0],
+               M_hist=d["M_hist"] / n_all, corr=d["corr"][:, :, :] / n_all[:, :, None])
     names = r["diag_attrs"].get("class_names")
     if names:
         npl = r["attrs"]["N"] * (1 if r["attrs"]["dim"] == 2 else 3)
@@ -57,6 +61,10 @@ def diag_means(r):
         out["plaq_und_frac"] = d["h_und"] / n[:, 0] / npl
         out["link_amb_frac"] = d["h_linkamb"] / n[:, 0]
         out["fit_resid"] = d["h_resid"] / n[:, 0]
+        if "h_scan" in d and d["h_scan"].shape[1] > 3:            # (res, overlap, margin) combos
+            out["scan_per_plaq"] = d["h_scan"] / n[:, :, None] / npl
+        if "h_resid_hist" in d:
+            out["resid_hist"] = d["h_resid_hist"] / n
         for k in r["diag_attrs"]["block_k"]:
             norm = (2 * k - 1) ** 2 * r["N"]
             out[f"block{k}_density"] = d[f"b{k}_counts"] / n / norm
