@@ -230,7 +230,7 @@ def test_uniform_has_no_ambiguity():
 
 @pytest.mark.parametrize("name", ["T", "D"])
 def test_reportable_vortices_are_unambiguous_on_one_plaquette(name):
-    """Ideal 1, 4, 6+- vortices: link margins (>= 0.259) stay above the default threshold."""
+    """Ideal 1, 4, 6+- vortices: link margins (>= 0.259) stay above the default threshold (0.15)."""
     g = D.FrameGroup(reference(name))
     for c in D.reportable_classes(g):
         gi = g.classes[c][0]
@@ -245,7 +245,7 @@ def test_2pi_vortex_is_not_reliable_on_one_plaquette():
     for name, expect_defined in (("T", True), ("D", False)):
         g = D.FrameGroup(reference(name))
         gi = [m[0] for m in g.classes if g.quats[m[0], 0] < -0.99][0]
-        r = D.holonomy_full(_vortex_q(g, gi), _plaq_loop(1), g)
+        r = D.holonomy_full(_vortex_q(g, gi), _plaq_loop(1), g, margin_thr=0.25)
         assert (r["cls"][0] != D.UNDEFINED) == expect_defined
         assert r["ambiguous"][0] or r["cls"][0] == D.UNDEFINED
     # and the single-plaquette overlap cut alone does NOT catch it in T
@@ -270,7 +270,7 @@ def test_2pi_vortex_axis_dependence_documented():
     flagged, leak = 0, set()
     for ax in axes:
         q = D.vortex_orientations(lat.coords.astype(float), CORE, gi, g, axis_hint=ax)
-        r = D.holonomy_full(q, _plaq_loop(1), g)
+        r = D.holonomy_full(q, _plaq_loop(1), g, margin_thr=0.25)
         if r["ambiguous"][0] or r["cls"][0] == D.UNDEFINED:
             flagged += 1
         else:
@@ -285,9 +285,9 @@ def test_block_loops_resolve_the_big_classes():
     g = D.FrameGroup(reference("T"))
     for c, members in enumerate(g.classes):
         q = _vortex_q(g, members[0])
-        r3 = D.holonomy_full(q, _plaq_loop(3), g)
+        r3 = D.holonomy_full(q, _plaq_loop(3), g, margin_thr=0.25)
         assert r3["cls"][0] == c and not r3["ambiguous"][0], g.class_names[c]
-        r2 = D.holonomy_full(q, _plaq_loop(2), g)
+        r2 = D.holonomy_full(q, _plaq_loop(2), g, margin_thr=0.25)
         assert r2["cls"][0] == c
         if g.class_names[c] != "2":
             assert not r2["ambiguous"][0], g.class_names[c]
@@ -319,3 +319,103 @@ def test_noise_ambiguity_fraction_is_reported():
     c = D.census(out, g, lat.N)
     assert c["undefined"] + c["ambiguous"] + int(out["reliable"].sum()) == lat.N
     assert c["link_ambiguous_fraction"] > 0.2
+
+
+# ------------------------------------------------------- follow-up 4: block statistics
+def _random_q(lat, g, rng, noise):
+    """Orientation quaternions: uniform reference plus random rotations of angle ~ noise."""
+    ax = rng.normal(size=(lat.N, 3))
+    ax /= np.linalg.norm(ax, axis=1)[:, None]
+    ang = noise * rng.random(lat.N)
+    return np.concatenate([np.cos(ang / 2)[:, None], np.sin(ang / 2)[:, None] * ax], 1)
+
+
+@pytest.mark.parametrize("noise", [0.3, 1.2, 3.0])
+def test_block_holonomy_is_product_of_plaquettes(noise):
+    """Non-abelian Stokes: the element of a block-boundary loop equals the ordered, transported
+    product of its interior plaquette holonomies (any q, any m x n rectangle, any plane)."""
+    rng = np.random.default_rng(10)
+    g = D.FrameGroup(reference("T"))
+    for dim, planes in ((2, [(0, 1)]), (3, [(0, 1), (1, 2), (2, 0)])):
+        lat = Lattice(dim, 8)
+        q = _random_q(lat, g, rng, noise)
+        h = D.link_elements(q, lat, g)
+        # reversed links carry the inverse element
+        for ax in range(dim):
+            assert np.all(g.inverse[h[:, ax]] == h[lat.nbr[:, ax], ax + dim])
+        for plane in planes:
+            for m, n in ((1, 1), (2, 2), (3, 3), (2, 3), (5, 3)):
+                a0 = int(rng.integers(lat.N))
+                u, v = plane
+                # explicit boundary loop of the m x n rectangle
+                path = []
+                s = a0
+                for ax, cnt, sg in ((u, m, 1), (v, n, 1), (u, m, -1), (v, n, -1)):
+                    for _ in range(cnt):
+                        path.append(s)
+                        s = lat.nbr[s, ax + (0 if sg > 0 else dim)]
+                loop = np.array(path)[None, :]
+                direct = D.holonomy_full(q, loop, g, match_thr=0.0, margin_thr=0.0)["elem"][0]
+                assert D.block_from_plaquettes(lat, h, g, a0, m, n, plane) == direct, (dim, plane, m, n)
+
+
+def test_misread_2pi_vortex_is_compensated_inside_the_block():
+    """A 2pi vortex whose core plaquette is mis-read as 6- carries compensating fake defects in the
+    surrounding plaquettes, and the k=2 block net class is the true one (2)."""
+    g = D.FrameGroup(reference("T"))
+    lat = Lattice(2, L)
+    gi = [m[0] for m in g.classes if g.quats[m[0], 0] < -0.99][0]
+    cls_2 = g.class_of[gi]
+    q = _vortex_q(g, gi)
+    h = D.link_elements(q, lat, g)
+    core = lat.site_index(X0 - 1, Y0 - 1)               # lower-left site of the 4x4-site block
+    inner = [lat.site_index(X0 - 1 + i, Y0 - 1 + j) for j in range(3) for i in range(3)]
+    plaq = D.holonomy_full(q, lat.plaquettes[inner], g, match_thr=0.0, margin_thr=0.0)
+    triv = g.class_of[g.identity]
+    n_nontriv = int((plaq["cls"] != triv).sum())
+    assert n_nontriv >= 2                                # core mis-read plus compensating ones
+    block = D.holonomy_full(q, D.square_loop(L, X0, Y0, 2)[None, :], g, margin_thr=0.0)
+    assert block["cls"][0] == cls_2
+    assert D.block_from_plaquettes(lat, h, g, core, 3, 3) == block["elem"][0]
+
+
+def test_block_census_counts_and_flags():
+    g = D.FrameGroup(reference("T"))
+    lat = Lattice(2, L)
+    # uniform: quantitative, zero density
+    q0 = np.tile([1.0, 0, 0, 0], (lat.N, 1))
+    bc = D.block_census(q0, lat, g, k=2)
+    assert bc["quantitative"] and bc["nontrivial_fraction"] == 0.0
+    assert all(v == 0 for v in bc["density"].values())
+    # isolated 6+ vortex: (2k-1)^2 = 9 overlapping blocks see it -> density 1/N (away from the seam)
+    gi = [m[0] for m in g.classes if g.class_names[g.class_of[m[0]]] == "6+"][0]
+    q = _vortex_q(g, gi)
+    loops = lat.block_loops(2)
+    r = D.holonomy_full(q, loops, g, margin_thr=D.MARGIN_THR_BLOCK)
+    x, y = lat.coords[:, 0], lat.coords[:, 1]
+    seam = (x == 0) | (x == L - 1) | (y == 0) | (y == L - 1)
+    ok = ~seam[loops].any(1)
+    c6 = g.class_names.index("6+")
+    assert int(((r["cls"] == c6) & ~r["ambiguous"] & ok).sum()) == 9
+    # high disorder: flagged not quantitative
+    rng = np.random.default_rng(3)
+    qn = _random_q(lat, g, rng, 3.0)
+    bn = D.block_census(qn, lat, g, k=2)
+    assert not bn["quantitative"] and bn["nontrivial_fraction"] > 0.1
+    # 3D: line length per volume uses the same normalisation
+    lat3 = Lattice(3, 4)
+    b3 = D.block_census(np.tile([1.0, 0, 0, 0], (lat3.N, 1)), lat3, g, k=1)
+    assert b3["P"] == 3 * lat3.N and b3["quantitative"]
+
+
+def test_margin_scan_is_monotone():
+    rng = np.random.default_rng(4)
+    g = D.FrameGroup(reference("T"))
+    lat = Lattice(2, 12)
+    spins = D.spins_from_quats(_random_q(lat, g, rng, 0.9), g.ref)
+    det = D.detect(spins, lat.plaquettes, g)
+    sc = D.margin_scan(det, g, thresholds=(0.0, 0.15, 0.2, 0.25, 0.5))
+    amb = [sc[t]["ambiguous"] for t in (0.0, 0.15, 0.2, 0.25, 0.5)]
+    assert amb == sorted(amb) and amb[0] == 0
+    for t, s in sc.items():
+        assert s["ambiguous"] + sum(s["counts"].values()) + s["undefined"] == lat.N

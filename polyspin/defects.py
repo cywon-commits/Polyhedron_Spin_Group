@@ -180,7 +180,12 @@ def fit_orientations(spins, group: FrameGroup):
     return R[ar, best], res[ar, best], best
 
 
-MARGIN_THR = 0.25  # see docs/M3_prep_report.md for the trade-off behind this default
+# Link-margin thresholds.  A single plaquette is used for defect *positions* and records reliable
+# and ambiguous plaquettes separately; 0.15-0.25 is scanned as a detector diagnostic only
+# (margin_scan).  Class densities use 2k x 2k block loops (k = 2 default), whose links resolve every
+# class except 2 unambiguously.
+MARGIN_THR = 0.15
+MARGIN_THR_BLOCK = 0.25
 
 
 def holonomy_full(q, loops, group: FrameGroup, match_thr=0.9, margin_thr=MARGIN_THR):
@@ -189,6 +194,7 @@ def holonomy_full(q, loops, group: FrameGroup, match_thr=0.9, margin_thr=MARGIN_
     q      (N,4) orientation quaternions (sign arbitrary)
     loops  (P,m) site indices; the loop closes from the last site to the first
     Returns dict:
+      elem       (P,) index in 2G of the ordered link product (before taking the class)
       cls        (P,) conjugacy-class id, UNDEFINED where any link overlap < match_thr
       overlap    (P,) minimum link overlap (best element)
       margin     (P,) minimum link margin (best minus runner-up overlap)
@@ -206,7 +212,7 @@ def holonomy_full(q, loops, group: FrameGroup, match_thr=0.9, margin_thr=MARGIN_
     minov, minmg = ov.min(1), mg.min(1)
     undefined = minov < match_thr
     cls = np.where(undefined, UNDEFINED, cls)
-    return dict(cls=cls, overlap=minov, margin=minmg,
+    return dict(elem=acc, cls=cls, overlap=minov, margin=minmg,
                 ambiguous=(minmg < margin_thr) & ~undefined, link_margin=mg)
 
 
@@ -268,15 +274,102 @@ def census(det, group: FrameGroup, n_sites=None):
     return out
 
 
-def block_census(q, lattice, group: FrameGroup, k=2, **kw):
-    """Class distribution of the 2k x 2k block-boundary loops (diagnostic of how finely big
-    defects are split into small ones when compared with the plaquette census)."""
+def block_census(q, lattice, group: FrameGroup, k=2, match_thr=0.9, margin_thr=MARGIN_THR_BLOCK,
+                 frac_limit=0.1):
+    """Class distribution of the 2k x 2k block-boundary loops -- the default statistic for class
+    densities (H1, H2).
+
+    A block holonomy is algebraically the ordered, parallel-transported product of the holonomies
+    of the (2k-1)^2 plaquettes inside it (``block_from_plaquettes``), so a plaquette misreading of a
+    large defect is compensated inside the block: block-level net charge is exact, only the
+    resolution is coarser.  If two defects fall into one block only their fused net class is seen.
+
+    Counting: every block whose interior contains an isolated defect reports it, i.e. (2k-1)^2
+    overlapping blocks per defect, so  density = count / ((2k-1)^2 * n_sites)  per site (2D: defects
+    per site; 3D: defect-line length per volume).
+    ``nontrivial_fraction`` is the fraction of blocks that are NOT reliably trivial (nontrivial,
+    ambiguous or undefined, i.e. conservative); above ``frac_limit`` the densities are flagged
+    ``quantitative = False``.
+    """
     loops = lattice.block_loops(k)
-    r = holonomy_full(q, loops, group, **kw)
-    rel = ~(r["cls"] == UNDEFINED) & ~r["ambiguous"]
+    r = holonomy_full(q, loops, group, match_thr, margin_thr)
+    undefined = r["cls"] == UNDEFINED
+    rel = ~undefined & ~r["ambiguous"]
+    triv = group.class_of[group.identity]
     counts = {name: int(((r["cls"] == c) & rel).sum()) for c, name in enumerate(group.class_names)}
-    return dict(counts=counts, undefined=int((r["cls"] == UNDEFINED).sum()),
-                ambiguous=int(r["ambiguous"].sum()), P=len(loops))
+    P = len(loops)
+    n_trivial = int(((r["cls"] == triv) & rel).sum())
+    frac = 1.0 - n_trivial / P
+    norm = (2 * k - 1) ** 2 * lattice.N
+    triv_name = group.class_names[triv]
+    return dict(counts=counts, undefined=int(undefined.sum()), ambiguous=int(r["ambiguous"].sum()), P=P,
+                k=k, nontrivial_fraction=frac, quantitative=bool(frac <= frac_limit),
+                density={n: v / norm for n, v in counts.items() if n != triv_name},
+                reportable=[group.class_names[c] for c in reportable_classes(group)])
+
+
+def link_elements(q, lattice, group: FrameGroup):
+    """2G element index of every directed link: (N, z) array, columns as in ``Lattice.nbr``
+    (+axes first, then the reversed links, which carry the inverse element)."""
+    N, z = lattice.nbr.shape
+    h = np.empty((N, z), dtype=np.int64)
+    for c in range(z):
+        rel = qmul(qconj(q), q[lattice.nbr[:, c]])
+        h[:, c] = group.nearest(rel)[0]
+    return h
+
+
+def block_from_plaquettes(lattice, h, group: FrameGroup, a0, m, n, plane=(0, 1)):
+    """Element of the boundary of the m x n-plaquette rectangle whose lower-left site is ``a0``
+    (axes ``plane``), built from the plaquette holonomies by the non-abelian Stokes decomposition
+        W = Lasso(col m-1) ... Lasso(col 0),   col_j = Q_0 Lasso(Q_1) ... Lasso(Q_{n-1}),
+    where Lasso(P) = T_P h_P T_P^-1 and T_P runs from the base point along the bottom edge and up
+    the left edge of the column.  Uses only the link elements ``h`` of ``link_elements``."""
+    u, v = plane
+    mult, inv, one = group.mult, group.inverse, group.identity
+
+    def step(site, axis, sign):
+        c = axis + (0 if sign > 0 else lattice.dim)
+        return lattice.nbr[site, c], h[site, c]
+
+    def path_elem(start, moves):
+        e, s = one, start
+        for axis, sign in moves:
+            s, he = step(s, axis, sign)
+            e = mult[e, he]
+        return e, s
+
+    def plaq(site):  # counter-clockwise a -> +u -> +v -> -u -> -v
+        e, _ = path_elem(site, [(u, 1), (v, 1), (u, -1), (v, -1)])
+        return e
+
+    W = one
+    cols = []
+    for j in range(m):
+        base_j = a0
+        T, base_j = path_elem(a0, [(u, 1)] * j)
+        col = one
+        for i in range(n):
+            Ti, site = path_elem(base_j, [(v, 1)] * i)   # up the left edge of column j
+            las = mult[mult[Ti, plaq(site)], inv[Ti]]
+            col = mult[col, las]
+        cols.append(mult[mult[T, col], inv[T]])
+    for e in reversed(cols):                              # ccw: later columns stand to the left
+        W = mult[W, e]
+    return W
+
+
+def margin_scan(det, group: FrameGroup, thresholds=(0.15, 0.2, 0.25)):
+    """Detector diagnostic: for each margin threshold, per-class counts of reliable plaquettes and the
+    number of ambiguous ones (from a ``detect`` result)."""
+    out = {}
+    cls, mg, und = det["cls"], det["margin"], det["undefined"]
+    for thr in thresholds:
+        amb = (mg < thr) & ~und
+        rel = ~und & ~amb
+        out[thr] = dict(ambiguous=int(amb.sum()), undefined=int(und.sum()),
+                        counts={nm: int(((cls == c) & rel).sum()) for c, nm in enumerate(group.class_names)})
+    return out
 
 
 # ------------------------------------------------------- artificial vortices

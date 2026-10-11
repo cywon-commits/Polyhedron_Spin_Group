@@ -32,16 +32,22 @@ MUTATIONS = [
     ("centre-selection weight 1/n instead of 1/(n-1)",
      "0.5 * acc / (n - 1)", "0.5 * acc / n",
      "polyspin/tests/test_followup1.py -k four_spin"),
+    ("replica exchange: swapped sign of the energy difference",
+     "d = (betas[t] - betas[t + 1]) * (energies_by_T[t] - energies_by_T[t + 1])",
+     "d = (betas[t] - betas[t + 1]) * (energies_by_T[t + 1] - energies_by_T[t])",
+     "polyspin/tests/test_pt.py -k detailed", "pt.py"),
 ]
 
 
 def main():
     ok = True
-    for name, old, new, tests in MUTATIONS:
+    for entry in MUTATIONS:
+        name, old, new, tests = entry[:4]
+        target = entry[4] if len(entry) > 4 else "moves.py"
         with tempfile.TemporaryDirectory() as tmp:
             shutil.copytree(ROOT / "polyspin", Path(tmp) / "polyspin",
                             ignore=shutil.ignore_patterns("__pycache__", "*.nbi", "*.nbc"))
-            f = Path(tmp) / "polyspin" / "moves.py"
+            f = Path(tmp) / "polyspin" / target
             src = f.read_text()
             assert old in src, f"pattern for '{name}' not found"
             f.write_text(src.replace(old, new))
