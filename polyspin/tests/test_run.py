@@ -94,3 +94,15 @@ def test_hysteresis_mode(tmp_path):
         assert np.allclose(v, [0.5, 0.6, 0.7, 0.8, 0.7, 0.6, 0.5])
         assert f["m3"].shape == (7,) and f["final_spins"].shape == (7, 16, 4, 3)
         assert f.attrs["n_up"] == 4 and len(f.attrs["git_hash"]) >= 7
+
+
+def test_threshold_rule_and_h2_verdict():
+    from polyspin.analysis.defect_threshold import choose_residual_threshold, h2_verdict
+    dens = np.array([[1.0, 1.05, 1.06, 1.06], [2.0, 2.1, 2.15, 2.15], [0.0, 0.0, 0.0, 0.0]])
+    assert choose_residual_threshold(dens, counts_floor=1e-6) == 0          # flat from the first threshold
+    dens2 = np.array([[1.0, 1.5, 1.6, 1.6], [2.0, 2.1, 2.15, 2.15]])
+    assert choose_residual_threshold(dens2, counts_floor=1e-6) == 1          # first step changes by 33%
+    assert choose_residual_threshold(np.array([[1.0, 2.0, 4.0, 8.0]])) is None
+    T = np.array([0.1, 0.2, 0.3, 0.4])
+    assert h2_verdict(T, [0.0, 0.01, 0.2, 0.2], [0.0, 0.02, 0.05, 0.5])[0] == "defect-mediated"
+    assert h2_verdict(T, [0.0, 0.0, 0.2, 0.2], [0.0, 0.02, 0.6, 0.9])[0].startswith("amplitude")

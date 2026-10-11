@@ -65,6 +65,12 @@ def diag_means(r):
             out["scan_per_plaq"] = d["h_scan"] / n[:, :, None] / npl
         if "h_resid_hist" in d:
             out["resid_hist"] = d["h_resid_hist"] / n
+        if "c_counts" in d:
+            nco = (r["attrs"]["size"] // 2) ** r["attrs"]["dim"] * (1 if r["attrs"]["dim"] == 2 else 3)
+            out["coarse_density"] = d["c_counts"] / n / r["N"]           # per fine site
+            out["coarse_und_frac"] = d["c_und"] / n[:, 0] / nco
+            out["coarse_amb_frac"] = d["c_amb"] / n[:, 0] / nco
+            out["coarse_quality"] = d["c_quality"] / n[:, 0]
         for k in r["diag_attrs"]["block_k"]:
             norm = (2 * k - 1) ** 2 * r["N"]
             out[f"block{k}_density"] = d[f"b{k}_counts"] / n / norm

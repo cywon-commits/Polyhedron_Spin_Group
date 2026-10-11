@@ -12,10 +12,14 @@ from .rng import make_state
 from .tuning import tune_steps
 
 
-def make_slab(lattice, S_left, S_right, axis=0, frac=0.5):
-    """Spins (N,n,3): clusters with coordinate along ``axis`` < frac*L get S_left, the rest S_right."""
+def make_slab(lattice, S_left, S_right, axis=0, frac=0.5, kind="axis"):
+    """Spins (N,n,3): clusters with coordinate along ``axis`` < frac*L get S_left, the rest S_right.
+    kind="diag": the interface runs along a lattice diagonal ((sum of coordinates) mod L < frac*L)."""
     L = lattice.size
-    left = lattice.coords[:, axis] < int(round(frac * L))
+    if kind == "diag":
+        left = (lattice.coords.sum(1) % L) < int(round(frac * L))
+    else:
+        left = lattice.coords[:, axis] < int(round(frac * L))
     spins = np.empty((lattice.N,) + S_left.shape)
     spins[left] = S_left
     spins[~left] = S_right
@@ -29,9 +33,9 @@ def moment_fractions(spins, lo=0.25, hi=0.75):
 
 
 def run_slab(lattice, params: Params, T, S_C, S_F, n_sweeps, record_every=50, seed=0, kappa=20.0,
-             n_tune=4000):
+             n_tune=4000, kind="axis"):
     """Single-temperature MC of a slab configuration; returns (sweeps, fractions (k,3), energies (k,))."""
-    spins = make_slab(lattice, S_C, S_F)
+    spins = make_slab(lattice, S_C, S_F, kind=kind)
     p, nbr, beta = params.array(), lattice.nbr, 1.0 / T
     s = make_state(seed, 0)
     d, dr = tune_steps(spins, nbr, p, beta, s, delta0=np.sqrt(T), n_rounds=15, block=20, use_overlap=True)

@@ -8,11 +8,13 @@ import numpy as np
 
 
 class Lattice:
-    def __init__(self, dim, size):
+    def __init__(self, dim, size, strict=True):
         if dim not in (2, 3):
             raise ValueError("dim must be 2 or 3")
-        if size < 4 or size % 2:
+        if strict and (size < 4 or size % 2):
             raise ValueError("size must be even and >= 4 (bipartite, no double bonds)")
+        if size < 3:
+            raise ValueError("size must be >= 3")
         self.dim, self.size = dim, size
         self.N = size ** dim
         self.z = 2 * dim

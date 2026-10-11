@@ -439,3 +439,27 @@ def test_scan_detector_reproduces_detect_and_is_monotone():
     det = D.detect(spins, lat.plaquettes, g, res_thr=1.0, match_thr=0.0, margin_thr=0.0)
     und = [D.scan_detector(det, g, [c])[0][-1] for c in combos]
     assert und == sorted(und, reverse=True)                              # looser cuts -> fewer undefined
+
+
+# ------------------------------------------------------- follow-up 6: coarse-grained detector
+def test_coarse_detector():
+    g = D.FrameGroup(reference("T"))
+    lat = Lattice(2, 16)
+    tab = D.octupole_table(g.ref, 20000)
+    uni = D.coarse_detect(np.tile(g.ref, (lat.N, 1, 1)), lat, g, table=tab, refine=300)
+    assert uni["reliable"].all() and np.all(uni["cls"] == g.class_of[g.identity])
+    assert uni["coarse"].size == 8 and uni["quality"].min() > 0.99
+    # a smooth 6+ vortex with core at the corner of four 2x2 blocks, with strong single-cluster shape noise
+    gi = [m[0] for m in g.classes if g.class_names[g.class_of[m[0]]] == "6+"][0]
+    q = D.vortex_orientations(lat.coords.astype(float), CORE, gi, g)
+    sp = D.spins_from_quats(q, g.ref)
+    rng = np.random.default_rng(0)
+    sp = sp + 0.2 * rng.normal(size=sp.shape)
+    sp /= np.linalg.norm(sp, axis=-1, keepdims=True)
+    r = D.coarse_detect(sp, lat, g, table=tab, refine=300)
+    c = r["coarse"]
+    seam = (c.coords[c.plaquettes[:, 0], 0] == 7) | (c.coords[c.plaquettes[:, 0], 1] == 7)
+    found = [(int(p), g.class_names[r["cls"][p]]) for p in np.flatnonzero((r["cls"] != g.class_of[g.identity]) & ~seam)]
+    assert found == [(3 + 8 * 3, "6+")]
+    with pytest.raises(ValueError):
+        D.coarse_detect(np.tile(g.ref, (Lattice(2, 6).N, 1, 1)), Lattice(2, 6), g, block=4, table=tab)

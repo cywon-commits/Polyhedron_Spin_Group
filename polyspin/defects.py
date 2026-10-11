@@ -469,3 +469,77 @@ def skyrmion_density(spins, plaquettes, mag_thr=1e-3):
     q = (_solid_angle(a, b, c) + _solid_angle(a, c, d)) / (4 * np.pi)
     bad = (nm[plaquettes] < mag_thr).any(1)
     return np.where(bad, 0.0, q), bad
+
+
+# --------------------------------------------------------- coarse-grained detector (independent check)
+def octupole_table(ref, n_samples=40000, seed=0):
+    """Table of (rotation matrices, octupole vectors q3 = sum_i Y_3m(R e_i)) for random rotations R.
+    The octupole of a rotated reference identifies its orientation up to the symmetry group (T for the
+    tetrahedron)."""
+    from .observables import _YC, _YL, _YM, _YP, _YSC, multipoles_per_cluster
+
+    R = Rotation.random(n_samples, random_state=seed).as_matrix()
+    spins = np.einsum("mkl,il->mik", R, np.asarray(ref, float))
+    q = multipoles_per_cluster(spins, _YL, _YM, _YSC, _YC, _YP)[:, _YL == 3]
+    return R, q
+
+
+def coarse_orientations(spins, lattice, block=2, table=None, ref=None, refine=2000, seed=0):
+    """Orientation quaternions of block x block (x block) cluster blocks.
+
+    The cluster octupoles q3 are averaged over each block; the block orientation is the table rotation
+    (then refined by random local search) whose reference octupole is closest to the average.  This
+    suppresses single-cluster shape noise near the transition.  Returns (q (Nb,4), coarse Lattice,
+    fit quality (Nb,) = |q_avg . q_best| / |q_avg| / |q_ref|)."""
+    from .observables import _YC, _YL, _YM, _YP, _YSC, multipoles_per_cluster
+
+    L, dim = lattice.size, lattice.dim
+    if L % block:
+        raise ValueError("lattice size must be a multiple of the block size")
+    Lc = L // block
+    if table is None:
+        table = octupole_table(ref, seed=seed)
+    Rtab, qtab = table
+    q3 = multipoles_per_cluster(spins, _YL, _YM, _YSC, _YC, _YP)[:, _YL == 3]
+    bc = lattice.coords // block
+    bidx = sum(bc[:, k] * Lc ** k for k in range(dim))
+    Nb = Lc ** dim
+    avg = np.zeros((Nb, 7))
+    np.add.at(avg, bidx, q3)
+    avg /= block ** dim
+    best = (avg @ qtab.T).argmax(1)
+    Rb = Rtab[best].copy()
+    refq = qtab[0]  # any table row gives the norm
+    if refine:
+        rng = np.random.default_rng(seed)
+        ref_arr = np.asarray(ref, float) if ref is not None else None
+        if ref_arr is not None:
+            for sigma in (0.06, 0.02):
+                dR = Rotation.from_rotvec(sigma * rng.normal(size=(refine, 3))).as_matrix()
+                cand = np.einsum("bij,mjk->bmik", Rb, dR)                       # (Nb, m, 3, 3)
+                sp = np.einsum("bmkl,il->bmik", cand, ref_arr)                  # (Nb, m, n, 3)
+                qc = multipoles_per_cluster(sp.reshape(-1, sp.shape[2], 3), _YL, _YM, _YSC, _YC, _YP)
+                qc = qc[:, _YL == 3].reshape(Nb, refine, 7)
+                score = np.einsum("bmq,bq->bm", qc, avg)
+                k = score.argmax(1)
+                Rb = cand[np.arange(Nb), k]
+    quat = mat_to_quat(Rb)
+    from .lattice import Lattice as _Lat
+    coarse = _Lat(dim, Lc, strict=False)
+    quality = np.minimum(1.0, (avg * (qtab[best])).sum(1) / np.maximum(
+        np.linalg.norm(avg, axis=1) * np.linalg.norm(qtab[best], axis=1), 1e-12))
+    return quat, coarse, quality
+
+
+def coarse_detect(spins, lattice, group: FrameGroup, block=2, table=None, match_thr=0.9,
+                  margin_thr=MARGIN_THR, quality_thr=0.0, **kw):
+    """Holonomy classes of the coarse-grained plaquettes.  Returns dict(cls, undefined, ambiguous,
+    reliable, quality (Nb,), coarse lattice, q)."""
+    q, coarse, quality = coarse_orientations(spins, lattice, block, table, ref=group.ref, **kw)
+    r = holonomy_full(q, coarse.plaquettes, group, match_thr, margin_thr)
+    bad = (quality[coarse.plaquettes] < quality_thr).any(1)
+    cls = np.where(bad, UNDEFINED, r["cls"])
+    und = cls == UNDEFINED
+    amb = r["ambiguous"] & ~und
+    return dict(cls=cls, undefined=und, ambiguous=amb, reliable=~(und | amb), quality=quality,
+                coarse=coarse, q=q, overlap=r["overlap"], margin=r["margin"])
