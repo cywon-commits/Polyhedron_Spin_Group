@@ -23,6 +23,16 @@ def _energy_grad(v, kappa, const, n):
     return e, gV.ravel()
 
 
+def minimize_kappa(kappa, const, S0):
+    """Minimise E = const + 1/2 sum_l kappa_l A_l directly from channel couplings."""
+    n = len(S0)
+    res = minimize(_energy_grad, np.asarray(S0, float).ravel(), args=(np.asarray(kappa), const, n),
+                   jac=True, method="L-BFGS-B",
+                   options=dict(maxiter=5000, ftol=1e-15, gtol=1e-11, maxcor=30))
+    V = res.x.reshape(n, 3)
+    return float(res.fun), V / np.linalg.norm(V, axis=1, keepdims=True)
+
+
 def minimize_cluster(P: Params, S0):
     kappa, const = channel_coeffs(P)
     n = P.n
@@ -66,6 +76,12 @@ def structured_starts(rng, noise=0.05):
         out.append(T @ Q.T)
     out = [S + noise * rng.normal(size=S.shape) for S in out]
     return [S / np.linalg.norm(S, axis=1, keepdims=True) for S in out]
+
+
+def find_ground_state_kappa(kappa, const=0.0, n=4, n_random=12, seed=0):
+    rng = np.random.default_rng(seed)
+    starts = [_rand_unit(rng, n) for _ in range(n_random)] + structured_starts(rng)
+    return min((minimize_kappa(kappa, const, S0) for S0 in starts), key=lambda r: r[0])
 
 
 def find_ground_state(P: Params, n_random=12, seed=0, return_all=False):
@@ -120,9 +136,11 @@ def classify_cluster(S, thr=0.95, m_tol=0.15):
     return "X"
 
 
-def phase_of_gs(P: Params, **kw):
+def phase_of_gs(P: Params, m_tol=1e-3, **kw):
+    """Ground-state phase.  C is the exactly collinear {22} state (M = 0): with the default
+    m_tol a {22} state with any net moment is D (D bends continuously out of C)."""
     E, S = find_ground_state(P, **kw)
-    return classify_cluster(S, thr=0.999), E, S
+    return classify_cluster(S, thr=0.999, m_tol=m_tol), E, S
 
 
 # ----------------------------------------------------------- analytic bounds
@@ -138,3 +156,9 @@ def boundary_TF(J, K, zH4):
 
 def boundary_CF(J):
     return J
+
+
+def phi_prime1(kappa):
+    """Phi'(1) = sum_l kappa_l l(l+1)/2: slope of the pair function at full overlap.
+    The all-parallel (F) state is locally stable against continuous splitting iff < 0."""
+    return float(sum(k * l * (l + 1) / 2 for l, k in zip((1, 2, 3, 4), kappa)))

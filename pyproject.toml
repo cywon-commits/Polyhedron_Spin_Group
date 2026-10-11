@@ -13,3 +13,4 @@ packages = ["polyspin", "polyspin.analysis"]
 
 [tool.pytest.ini_options]
 testpaths = ["polyspin/tests"]
+markers = ["slow: multi-minute statistical tests"]
