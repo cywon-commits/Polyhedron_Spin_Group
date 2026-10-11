@@ -1,0 +1,18 @@
+name: B_3d_L12_zH41_cool
+cut: B
+t0_prediction: C
+lattice: {dim: 3, size: 12}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 1.0, K: 0.5}
+temperatures:
+  list: [0.32012, 0.32338, 0.32662, 0.32988, 0.33318, 0.33651, 0.33988, 0.34328, 0.34671,
+    0.35018, 0.35368, 0.35722, 0.36079, 0.3644, 0.36804, 0.37172, 0.37544, 0.37919,
+    0.38298, 0.39195, 0.40501, 0.41636, 0.42804, 0.44014, 0.45265, 0.46573, 0.47954,
+    0.49403, 0.50928, 0.52536, 0.53353]
+sampling: {n_equil: 62000, n_meas: 62000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 775,
+  tune_every: 200, checkpoint_minutes: 20}
+init: random
+seed: 101
+exchange: true
+diagnostics:
+  defects: {stride: 3}
+stage: 1

@@ -1,0 +1,17 @@
+name: B_2d_L24_zH41_cool
+cut: B
+t0_prediction: C
+lattice: {dim: 2, size: 24}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 1.0, K: 0.5}
+temperatures:
+  list: [0.32073, 0.3262, 0.33151, 0.33656, 0.34148, 0.34621, 0.35056, 0.35473, 0.35828,
+    0.36187, 0.37711, 0.39309, 0.4104, 0.42894, 0.44886, 0.47046, 0.49394, 0.51944,
+    0.53456]
+sampling: {n_equil: 82000, n_meas: 82000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 1025,
+  tune_every: 200, checkpoint_minutes: 20}
+init: random
+seed: 101
+exchange: true
+diagnostics:
+  defects: {stride: 3}
+stage: 1

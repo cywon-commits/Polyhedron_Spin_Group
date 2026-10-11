@@ -1,0 +1,19 @@
+name: B_3d_L8_zH42_heat
+cut: B
+t0_prediction: C
+lattice: {dim: 3, size: 8}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 2.0, K: 0.5}
+temperatures:
+  list: [0.43347, 0.44531, 0.45738, 0.46973, 0.48229, 0.49497, 0.50776, 0.52077, 0.53405,
+    0.54752, 0.5611, 0.57474, 0.58853, 0.6025, 0.61652, 0.63055, 0.64457, 0.65854,
+    0.67247, 0.6864, 0.70029, 0.71416, 0.72805, 0.74185, 0.75542, 0.7688, 0.782, 0.79491,
+    0.8075, 0.82023, 0.83342, 0.84603, 0.85747, 0.86761, 0.87628, 0.88505, 0.8939,
+    0.90284, 0.91186, 0.92098, 0.93373, 0.97097]
+sampling: {n_equil: 40000, n_meas: 40000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 500,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 101
+exchange: true
+diagnostics:
+  defects: {stride: 3}
+stage: 1

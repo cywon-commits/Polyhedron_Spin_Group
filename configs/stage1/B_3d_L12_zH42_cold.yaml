@@ -1,0 +1,15 @@
+name: B_3d_L12_zH42_cold
+cut: B
+t0_prediction: C
+lattice: {dim: 3, size: 12}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 2.0, K: 0.5}
+temperatures:
+  list: [0.02, 0.05384, 0.14493, 0.39012]
+sampling: {n_equil: 15500, n_meas: 15500, sweeps_per_exchange: 1, meas_every: 5, diag_every: 250,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 101
+exchange: false
+diagnostics:
+  defects: {stride: 3}
+stage: 1

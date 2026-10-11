@@ -1,0 +1,17 @@
+name: B_3d_L10_zH42_cool
+cut: B
+t0_prediction: C
+lattice: {dim: 3, size: 10}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 2.0, K: 0.5}
+temperatures:
+  list: [0.78024, 0.78955, 0.79869, 0.80765, 0.81668, 0.82607, 0.83547, 0.8445, 0.85294,
+    0.86147, 0.87008, 0.87878, 0.88757, 0.89645, 0.90541, 0.91447, 0.92361, 0.93686,
+    0.97564, 1.01978, 1.06623, 1.11884, 1.17718, 1.24085, 1.30041]
+sampling: {n_equil: 40000, n_meas: 40000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 500,
+  tune_every: 200, checkpoint_minutes: 20}
+init: random
+seed: 101
+exchange: true
+diagnostics:
+  defects: {stride: 3}
+stage: 1

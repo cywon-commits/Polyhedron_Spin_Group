@@ -1,0 +1,18 @@
+name: A_2d_L16_zG1.5_pt
+cut: A
+t0_prediction: T
+lattice: {dim: 2, size: 16}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 1.5, zH4: 0.0, K: 0.5}
+temperatures:
+  list: [0.14806, 0.1542, 0.16058, 0.16707, 0.17375, 0.18054, 0.18748, 0.19461, 0.2018,
+    0.2089, 0.21609, 0.22346, 0.23063, 0.23769, 0.24488, 0.25197, 0.25879, 0.26545,
+    0.27215, 0.2784, 0.28445, 0.29007, 0.29573, 0.30165, 0.3087, 0.31647, 0.32555,
+    0.33529, 0.34607, 0.35806, 0.37118, 0.38593, 0.40243, 0.42085, 0.44139, 0.44418]
+sampling: {n_equil: 20000, n_meas: 20000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 250,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 101
+exchange: true
+diagnostics:
+  defects: {stride: 3}
+stage: 1

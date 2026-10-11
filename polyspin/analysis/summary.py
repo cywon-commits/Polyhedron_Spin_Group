@@ -89,3 +89,21 @@ def diag_means(r):
 def peak_temperature(T, y):
     i = int(np.argmax(y))
     return float(T[i]), i
+
+
+def export_summary(h5_path, npz_path):
+    """Compact (compressed npz) summary of a run: per-temperature thermodynamics with errors, tau,
+    diagnostics means and defect densities.  Raw time series stay in the HDF5 file."""
+    import json as _json
+
+    r = load_run(h5_path)
+    th = thermo(r)
+    dm = diag_means(r)
+    arrays = {f"th_{k}": np.asarray(v) for k, v in th.items()}
+    arrays.update({f"dm_{k}": np.asarray(v) for k, v in dm.items() if k != "class_names"})
+    a = {k: (v.item() if hasattr(v, "item") else v) for k, v in r["attrs"].items()}
+    arrays.update(T=r["T"], swap=r["swap"], swap_equil=r["swap_equil"], up_fraction=r["up_fraction"],
+                  acceptance=r["acceptance"], round_trips=r["round_trips"], meas_every=r["meas_every"],
+                  e_quantiles=np.percentile(r["e"], [1, 5, 25, 50, 75, 95, 99], axis=1).T,
+                  attrs=_json.dumps(a, default=str), class_names=_json.dumps(dm.get("class_names", [])))
+    np.savez_compressed(npz_path, **arrays)

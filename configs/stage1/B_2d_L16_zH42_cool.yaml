@@ -1,0 +1,16 @@
+name: B_2d_L16_zH42_cool
+cut: B
+t0_prediction: C
+lattice: {dim: 2, size: 16}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 2.0, K: 0.5}
+temperatures:
+  list: [0.80487, 0.82202, 0.838, 0.85327, 0.8679, 0.87798, 0.88676, 0.89562, 0.91769,
+    0.9581, 1.0132, 1.08522, 1.17439, 1.28492, 1.34145]
+sampling: {n_equil: 40000, n_meas: 40000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 500,
+  tune_every: 200, checkpoint_minutes: 20}
+init: random
+seed: 101
+exchange: true
+diagnostics:
+  defects: {stride: 3}
+stage: 1

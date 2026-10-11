@@ -1,0 +1,17 @@
+name: B_2d_L16_zH41_heat
+cut: B
+t0_prediction: C
+lattice: {dim: 2, size: 16}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 1.0, K: 0.5}
+temperatures:
+  list: [0.17819, 0.18533, 0.19282, 0.20051, 0.20836, 0.21647, 0.22468, 0.23323, 0.2418,
+    0.25067, 0.25935, 0.26824, 0.27713, 0.2861, 0.29494, 0.30366, 0.3124, 0.32063,
+    0.32882, 0.33648, 0.34383, 0.35048, 0.35627, 0.35984, 0.368, 0.39121, 0.39913]
+sampling: {n_equil: 40000, n_meas: 40000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 500,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 101
+exchange: true
+diagnostics:
+  defects: {stride: 3}
+stage: 1

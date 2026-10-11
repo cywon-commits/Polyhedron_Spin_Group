@@ -1,0 +1,18 @@
+name: B_2d_L16_zH40.25_pt
+cut: B
+t0_prediction: T
+lattice: {dim: 2, size: 16}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 0.25, K: 0.5}
+temperatures:
+  list: [0.07018, 0.07316, 0.07626, 0.07938, 0.08264, 0.08602, 0.08955, 0.09313, 0.0968,
+    0.10062, 0.1045, 0.10837, 0.11237, 0.11639, 0.1204, 0.12444, 0.12828, 0.13197,
+    0.13553, 0.13874, 0.14164, 0.14452, 0.14775, 0.15164, 0.15586, 0.16049, 0.16555,
+    0.17105, 0.17722, 0.18377, 0.19084, 0.19874, 0.20725, 0.21055]
+sampling: {n_equil: 20000, n_meas: 20000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 250,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 101
+exchange: true
+diagnostics:
+  defects: {stride: 3}
+stage: 1

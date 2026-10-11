@@ -10,6 +10,7 @@ Configuration (all keys optional except lattice/model/temperatures):
     sampling:  {n_equil: 20000, n_meas: 20000, sweeps_per_exchange: 1, meas_every: 1,
                 diag_every: 100, tune_every: 200, checkpoint_minutes: 20}
     init: random | ordered
+    exchange: true            # false: independent single-temperature chains (cold region, no swaps)
     seed: 1
     overlap_move: true
     diagnostics: {shape_thr: 0.95, correlators: true,
@@ -176,7 +177,8 @@ def run(cfg, out, resume=True, verbose=True, stop_after_blocks=None):
     while block < total_blocks:
         equil = block < n_eq_blocks
         pt.sweep_block(spe)
-        pt.exchange()
+        if cfg.get("exchange", True):
+            pt.exchange()
         block += 1
         if equil:
             if block % tune_stride == 0:
