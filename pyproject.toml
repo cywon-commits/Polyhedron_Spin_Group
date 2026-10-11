@@ -1,0 +1,15 @@
+[project]
+name = "polyspin"
+version = "0.1.0"
+description = "Finite-temperature Monte Carlo for lattices of polyhedral spin clusters"
+requires-python = ">=3.10"
+dependencies = ["numpy", "scipy", "numba", "h5py", "pyyaml"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[tool.setuptools]
+packages = ["polyspin", "polyspin.analysis"]
+
+[tool.pytest.ini_options]
+testpaths = ["polyspin/tests"]
