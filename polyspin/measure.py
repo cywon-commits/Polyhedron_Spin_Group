@@ -52,7 +52,7 @@ class Diagnostics:
         # defect detection is the expensive part of a diagnostic sample; with stride s it is evaluated
         # only at temperature indices t % s == 0 (counted separately in n_def)
         self.defect_stride = int(dcfg.get("stride", 1))
-        self.coarse_block = int(dcfg.get("coarse_block", 2))             # 0 disables
+        self.coarse_blocks = [b for b in dcfg.get("coarse_blocks", [2, 4]) if b]   # scales for R_b = rho(4)/rho(2)
         self.group = None
         ref = dcfg.get("holonomy_ref")
         if ref is not None:
@@ -87,14 +87,14 @@ class Diagnostics:
             self.b_frac = {k: np.zeros(R) for k in self.block_k}
             self.b_loops = {k: lattice.block_loops(k) for k in self.block_k}
             self.h_pair = np.zeros((R, 40))
-            self.do_coarse = bool(self.coarse_block) and lattice.size % self.coarse_block == 0 \
-                and lattice.size // self.coarse_block >= 3
+            self.coarse_blocks = [b for b in self.coarse_blocks
+                                  if lattice.size % b == 0 and lattice.size // b >= 3]
+            self.do_coarse = bool(self.coarse_blocks)
             if self.do_coarse:
                 self.coarse_table = D.octupole_table(g.ref, 20000)
-                self.c_counts = np.zeros((R, nc))
-                self.c_amb = np.zeros(R)
-                self.c_und = np.zeros(R)
-                self.c_quality = np.zeros(R)
+                # scale b = 2 keeps the legacy names c_*, other scales use c<b>_*
+                self.c = {b: dict(counts=np.zeros((R, nc)), amb=np.zeros(R), und=np.zeros(R), quality=np.zeros(R))
+                          for b in self.coarse_blocks}
         if self.do_z2:
             self.z2_count = np.zeros(R)
             self.z2_und = np.zeros(R)
@@ -155,13 +155,15 @@ class Diagnostics:
                 self.b_und[k][t] += bc["undefined"]
                 self.b_frac[k][t] += bc["nontrivial_fraction"]
         if self.group is not None and self.do_coarse:
-            cd = D.coarse_detect(spins, lat, self.group, self.coarse_block, self.coarse_table,
-                                 self.match_thr, self.margin_thr, refine=200)
-            for c in range(self.group.n_classes):
-                self.c_counts[t, c] += int(((cd["cls"] == c) & cd["reliable"]).sum())
-            self.c_amb[t] += cd["ambiguous"].sum()
-            self.c_und[t] += cd["undefined"].sum()
-            self.c_quality[t] += cd["quality"].mean()
+            for b in self.coarse_blocks:
+                cd = D.coarse_detect(spins, lat, self.group, b, self.coarse_table,
+                                     self.match_thr, self.margin_thr, refine=200)
+                a = self.c[b]
+                for c in range(self.group.n_classes):
+                    a["counts"][t, c] += int(((cd["cls"] == c) & cd["reliable"]).sum())
+                a["amb"][t] += cd["ambiguous"].sum()
+                a["und"][t] += cd["undefined"].sum()
+                a["quality"][t] += cd["quality"].mean()
         if self.do_z2:
             z = D.z2_vortices(spins, lat.plaquettes, self.z2_lam_thr)
             self.z2_count[t] += int((z == -1).sum())
@@ -186,7 +188,10 @@ class Diagnostics:
                 out[f"b{k}_counts"], out[f"b{k}_amb"] = self.b_counts[k], self.b_amb[k]
                 out[f"b{k}_und"], out[f"b{k}_frac"] = self.b_und[k], self.b_frac[k]
         if self.group is not None and getattr(self, "do_coarse", False):
-            out.update(c_counts=self.c_counts, c_amb=self.c_amb, c_und=self.c_und, c_quality=self.c_quality)
+            for b, a in self.c.items():
+                p = "c" if b == 2 else f"c{b}"
+                out.update({f"{p}_counts": a["counts"], f"{p}_amb": a["amb"], f"{p}_und": a["und"],
+                            f"{p}_quality": a["quality"]})
         if self.do_z2:
             out.update(z2_count=self.z2_count, z2_und=self.z2_und, z2_pair=self.z2_pair)
         if self.do_sky:

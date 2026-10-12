@@ -27,7 +27,10 @@ T_SPIN = {2: 0.74e-6, 3: 0.84e-6}          # s per spin-sweep and thread inside 
 STAGES = {
     1: dict(points=[("A", 0.5, "pt"), ("A", 1.0, "pt"), ("A", 1.5, "pt"),
                     ("B", 0.25, "pt"), ("B", 1.0, "first"), ("B", 2.0, "first")],
-            sizes={3: (8, 10, 12), 2: (16, 24, 32)}, dims=(3, 2)),
+            sizes={3: (8, 10, 12), 2: (16, 24, 32)}, dims=(3, 2),
+            # follow-up 7: tier 3 is reduced -- no B first-order heating/cooling ladders; A 3D L=12 only zG=1.0
+            # (pending the L=10 result) and 2D L=32 only zG=1.0 (H2)
+            tier3_points=[("A", 1.0, "pt")]),
 }
 
 
@@ -88,7 +91,7 @@ def config_of(it, seed=101):
     name0, cfg = make(it["cut"], it["dim"], it["L"], it["value"], dict(list=[round(float(t), 5) for t in it["T"]]),
                       samp, seed, f"_{it['tag']}", it["init"])
     cfg["exchange"] = it["exchange"]
-    cfg["diagnostics"] = dict(defects=dict(stride=3))
+    cfg["diagnostics"] = dict(defects=dict(stride=3, coarse_blocks=[2, 4]))
     cfg["stage"] = 1
     return name0, cfg
 
@@ -114,7 +117,8 @@ def main():
         if a.tier and tier + 1 not in a.tier:
             continue
         for dim in st["dims"]:
-            for cut, value, kind in st["points"]:
+            pts = st.get("tier3_points", st["points"]) if tier == 2 else st["points"]
+            for cut, value, kind in pts:
                 if a.only and a.only not in f"{cut}_{dim}d":
                     continue
                 tiers.setdefault(tier + 1, []).append((dim, cut, value, kind, st["sizes"][dim][tier]))

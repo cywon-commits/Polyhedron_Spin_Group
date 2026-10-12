@@ -4,12 +4,14 @@ t0_prediction: C
 lattice: {dim: 2, size: 16}
 model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 2.0, K: 0.5}
 temperatures:
-  list: [0.02, 0.0544, 0.14796, 0.40243]
+  list: [0.02, 0.05425, 0.14713, 0.39906]
 sampling: {n_equil: 10000, n_meas: 10000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 250,
   tune_every: 200, checkpoint_minutes: 20}
 init: ordered
 seed: 101
 exchange: false
 diagnostics:
-  defects: {stride: 3}
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
 stage: 1

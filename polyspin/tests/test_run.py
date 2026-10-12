@@ -106,3 +106,15 @@ def test_threshold_rule_and_h2_verdict():
     T = np.array([0.1, 0.2, 0.3, 0.4])
     assert h2_verdict(T, [0.0, 0.01, 0.2, 0.2], [0.0, 0.02, 0.05, 0.5])[0] == "defect-mediated"
     assert h2_verdict(T, [0.0, 0.0, 0.2, 0.2], [0.0, 0.02, 0.6, 0.9])[0].startswith("amplitude")
+
+
+def test_coarse_scales_recorded(tmp_path):
+    cfg = tiny(lattice=dict(dim=2, size=12))
+    cfg["sampling"].update(n_equil=20, n_meas=40, diag_every=20)
+    out = tmp_path / "c.h5"
+    runner.run(cfg, out, verbose=False)
+    from polyspin.analysis.summary import diag_means, load_run
+    dm = diag_means(load_run(out))
+    assert "coarse_density" in dm and "coarse4_density" in dm and "scale_ratio_R4" in dm
+    # uniform-ish low-T state: no defects at either scale, so R_4 is undefined (nan) rather than 0 or inf
+    assert np.isfinite(dm["coarse4_und_frac"]).all()

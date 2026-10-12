@@ -56,6 +56,7 @@ def diag_means(r):
     if names:
         npl = r["attrs"]["N"] * (1 if r["attrs"]["dim"] == 2 else 3)
         out["class_names"] = names
+        names = names
         out["plaq_density"] = d["h_counts"] / n / r["N"]             # per site, reliable plaquettes
         out["plaq_amb_frac"] = d["h_amb"] / n[:, 0] / npl
         out["plaq_und_frac"] = d["h_und"] / n[:, 0] / npl
@@ -65,12 +66,20 @@ def diag_means(r):
             out["scan_per_plaq"] = d["h_scan"] / n[:, :, None] / npl
         if "h_resid_hist" in d:
             out["resid_hist"] = d["h_resid_hist"] / n
-        if "c_counts" in d:
-            nco = (r["attrs"]["size"] // 2) ** r["attrs"]["dim"] * (1 if r["attrs"]["dim"] == 2 else 3)
-            out["coarse_density"] = d["c_counts"] / n / r["N"]           # per fine site
-            out["coarse_und_frac"] = d["c_und"] / n[:, 0] / nco
-            out["coarse_amb_frac"] = d["c_amb"] / n[:, 0] / nco
-            out["coarse_quality"] = d["c_quality"] / n[:, 0]
+        for b in (2, 4):
+            p = "c" if b == 2 else f"c{b}"
+            if f"{p}_counts" in d:
+                nco = (r["attrs"]["size"] // b) ** r["attrs"]["dim"] * (1 if r["attrs"]["dim"] == 2 else 3)
+                sfx = "" if b == 2 else str(b)
+                out[f"coarse{sfx}_density"] = d[f"{p}_counts"] / n / r["N"]       # per fine site
+                out[f"coarse{sfx}_und_frac"] = d[f"{p}_und"] / n[:, 0] / nco
+                out[f"coarse{sfx}_amb_frac"] = d[f"{p}_amb"] / n[:, 0] / nco
+                out[f"coarse{sfx}_quality"] = d[f"{p}_quality"] / n[:, 0]
+        if "coarse_density" in out and "coarse4_density" in out:
+            rep = [i for i, nm in enumerate(names) if nm in ("4", "6+", "6-", "4+", "4-")]
+            r2, r4 = out["coarse_density"][:, rep].sum(1), out["coarse4_density"][:, rep].sum(1)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                out["scale_ratio_R4"] = np.where(r2 > 0, r4 / r2, np.nan)          # R_b = rho(b=4) / rho(b=2)
         for k in r["diag_attrs"]["block_k"]:
             norm = (2 * k - 1) ** 2 * r["N"]
             out[f"block{k}_density"] = d[f"b{k}_counts"] / n / norm

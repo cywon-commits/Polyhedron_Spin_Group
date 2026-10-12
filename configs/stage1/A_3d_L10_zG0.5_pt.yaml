@@ -17,5 +17,7 @@ init: ordered
 seed: 101
 exchange: true
 diagnostics:
-  defects: {stride: 3}
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
 stage: 1
