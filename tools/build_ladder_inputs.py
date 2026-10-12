@@ -26,6 +26,9 @@ def main(out, dirs):
             a = r["attrs"]
             if "config_yaml" not in a or "cut:" not in a["config_yaml"]:
                 continue
+            cfgtxt = a["config_yaml"]
+            if "exchange: false" in cfgtxt or str(a.get("name", "")).endswith("_cool"):
+                continue                                    # cold chains / random-start cooling ladders
             th = thermo(r)
             k = key_of(a)
             if k in db and db[k]["size"] > int(a["size"]):
