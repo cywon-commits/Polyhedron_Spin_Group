@@ -30,7 +30,8 @@ STAGES = {
             sizes={3: (8, 10, 12), 2: (16, 24, 32)}, dims=(3, 2),
             # follow-up 7: tier 3 is reduced -- no B first-order heating/cooling ladders; A 3D L=12 only zG=1.0
             # (pending the L=10 result) and 2D L=32 only zG=1.0 (H2)
-            tier3_points=[("A", 1.0, "pt")]),
+            # H1 rule: no c_peak ~ N scaling or bimodality at L=10 (exponents 0.49, 0.12, 0.17) -> all three A points
+            tier3_points={3: [("A", 0.5, "pt"), ("A", 1.0, "pt"), ("A", 1.5, "pt")], 2: [("A", 1.0, "pt")]}),
 }
 
 
@@ -117,7 +118,7 @@ def main():
         if a.tier and tier + 1 not in a.tier:
             continue
         for dim in st["dims"]:
-            pts = st.get("tier3_points", st["points"]) if tier == 2 else st["points"]
+            pts = st["tier3_points"][dim] if tier == 2 and "tier3_points" in st else st["points"]
             for cut, value, kind in pts:
                 if a.only and a.only not in f"{cut}_{dim}d":
                     continue
