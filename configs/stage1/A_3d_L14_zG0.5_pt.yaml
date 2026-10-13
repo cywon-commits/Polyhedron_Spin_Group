@@ -14,6 +14,7 @@ init: ordered
 seed: 2024
 exchange: true
 diagnostics:
+  corr_blocks: 10
   defects:
     stride: 3
     coarse_blocks: [2, 4]
