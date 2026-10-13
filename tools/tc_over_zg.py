@@ -21,7 +21,7 @@ for k, (Tc, m3) in list(d.items()):                 # no cold chains at tier 3 (
         oth = [v[1] for kk, v in d.items() if kk[0] == k[0] and kk[2] == k[2] and np.isfinite(v[1])]
         d[k] = (Tc, float(np.mean(oth)) if oth else np.nan)
 fig, ax = plt.subplots(1, 2, figsize=(9, 3.6))
-cols = {8: "#0072B2", 10: "#D55E00", 12: "#009E73", 16: "#0072B2", 24: "#D55E00", 32: "#009E73"}
+cols = {8: "#0072B2", 10: "#D55E00", 12: "#009E73", 16: "#0072B2", 24: "#D55E00", 32: "#009E73", 14: "#CC79A7"}
 print("| dim | L | zG | T_c | T_c/zG | <m3>(T=0.02) | T_c/(zG <m3>^2) |\n|---|---|---|---|---|---|---|")
 for (dim, L, zg), (Tc, m3) in sorted(d.items()):
     print(f"| {dim}D | {L} | {zg:g} | {Tc:.4f} | {Tc/zg:.4f} | {m3:.3f} | {Tc/(zg*m3**2):.4f} |")

@@ -24,7 +24,7 @@ for dim in (2, 3):
         r = [rows[(dim, Lm, z)][0] / (z * rows[(dim, Lm, z)][idx] ** 2) for z in (0.5, 1.0, 1.5)]
         print(f"- {dim}D L={Lm}, m3 at {name} T_c: ratio over zG = 0.5, 1.0, 1.5: {np.round(r, 3).tolist()}; max/min = {max(r)/min(r):.2f}; "
               f"T_c/zG alone: max/min = {max(rows[(dim, Lm, z)][0]/z for z in (0.5,1,1.5))/min(rows[(dim, Lm, z)][0]/z for z in (0.5,1,1.5)):.2f}")
-fig, ax = plt.subplots(1, 2, figsize=(9, 3.6)); cols = {8: "#0072B2", 10: "#D55E00", 12: "#009E73", 16: "#0072B2", 24: "#D55E00", 32: "#009E73"}
+fig, ax = plt.subplots(1, 2, figsize=(9, 3.6)); cols = {8: "#0072B2", 10: "#D55E00", 12: "#009E73", 16: "#0072B2", 24: "#D55E00", 32: "#009E73", 14: "#CC79A7"}
 for dim, mk in ((2, "o"), (3, "s")):
     for L in sorted({k[1] for k in rows if k[0] == dim}):
         zs = sorted(k[2] for k in rows if k[0] == dim and k[1] == L)
