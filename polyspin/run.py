@@ -150,6 +150,7 @@ def run(cfg, out, resume=True, verbose=True, stop_after_blocks=None):
     n_taken = 0
     swap_equil = np.zeros(R - 1)
     wall_prev = 0.0
+    resumes = []                    # blocks at which this run was resumed from a checkpoint
 
     ckpt = Path(str(out) + ".ckpt.npz")
     if resume and ckpt.exists():
@@ -162,14 +163,16 @@ def run(cfg, out, resume=True, verbose=True, stop_after_blocks=None):
             block, n_taken = int(d["block"]), int(d["n_taken"])
             swap_equil = d["swap_equil"]
             wall_prev = float(d["wall"])
-            if verbose:
-                print(f"resumed from checkpoint at block {block}", flush=True)
+            resumes = [int(b) for b in d["resumes"]] + [block] if "resumes" in d.files else [block]
+            print(f"[{cfg.get('name', 'run')}] resumed from checkpoint at block {block}", flush=True)   # also when quiet
 
     def save_ckpt():
         arrs = {f"pt_{k}": v for k, v in pt.state_dict().items()}
         arrs.update({f"diag_{k}": v for k, v in diag.arrays().items()})
-        np.savez(ckpt, cfg_key=cfg_key, e_series=e_series, m_series=m_series, block=block,
-                 n_taken=n_taken, swap_equil=swap_equil, wall=wall_prev + time.time() - t0, **arrs)
+        tmp_ck = Path(str(ckpt) + ".tmp.npz")          # atomic: a kill during the write must not leave a torn checkpoint
+        np.savez(tmp_ck, cfg_key=cfg_key, e_series=e_series, m_series=m_series, block=block,
+                 n_taken=n_taken, swap_equil=swap_equil, resumes=np.array(resumes, int), wall=wall_prev + time.time() - t0, **arrs)
+        os.replace(tmp_ck, ckpt)
 
     t0 = time.time()
     last_ckpt = t0
@@ -220,7 +223,7 @@ def run(cfg, out, resume=True, verbose=True, stop_after_blocks=None):
         f.attrs.update(name=cfg.get("name", ""), seed=cfg["seed"], git_hash=commit, git_dirty=dirty,
                        config_yaml=yaml.safe_dump(cfg), params_json=json.dumps(P.__dict__),
                        zG=P.zG, zH4=P.zH4, dim=lat.dim, size=lat.size, N=lat.N, z=lat.z, n=P.n,
-                       gs_phase=gs_phase, wall_seconds=wall, sweeps=pt.sweeps_done,
+                       gs_phase=gs_phase, wall_seconds=wall, resumed_at_blocks=json.dumps(resumes), sweeps=pt.sweeps_done,
                        sweeps_per_second=pt.sweeps_done / max(wall, 1e-9),
                        numpy=np.__version__, python=sys.version.split()[0])
         f.create_dataset("T", data=temps)
