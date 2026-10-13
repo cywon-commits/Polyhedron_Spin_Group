@@ -101,7 +101,7 @@ def config_of(it, seed=101):
     name0, cfg = make(it["cut"], it["dim"], it["L"], it["value"], dict(list=[round(float(t), 5) for t in it["T"]]),
                       samp, seed, f"_{it['tag']}", it["init"])
     cfg["exchange"] = it["exchange"]
-    cfg["diagnostics"] = dict(defects=dict(stride=3, coarse_blocks=[2, 4]))
+    cfg["diagnostics"] = dict(corr_blocks=10, defects=dict(stride=3, coarse_blocks=[2, 4]))     # block-wise G_l(r) for error bars (tier-3 decision 5)
     cfg["stage"] = 1
     return name0, cfg
 

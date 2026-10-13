@@ -138,7 +138,7 @@ def run(cfg, out, resume=True, verbose=True, stop_after_blocks=None):
     tune_stride = max(int(S["tune_every"]) // spe, 1)
 
     dcfg, gs_phase, gs_spins = resolve_detectors(cfg, P, lat)
-    diag_cfg = dict(cfg["diagnostics"], defects=dcfg)
+    diag_cfg = dict(cfg["diagnostics"], defects=dcfg, n_expected=max(n_meas_blocks // diag_stride, 1))
     cfg_key = hashlib.sha256(json.dumps(cfg, sort_keys=True, default=str).encode()).hexdigest()[:16]
 
     pt = ParallelTempering(lat, P, temps, seed=cfg["seed"], init=cfg["init"], ref_state=gs_spins,

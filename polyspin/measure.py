@@ -43,6 +43,8 @@ class Diagnostics:
         self.lat, self.R, self.n = lattice, R, params.n
         self.shape_thr = cfg.get("shape_thr", 0.95)
         self.do_corr = cfg.get("correlators", True)
+        self.corr_nb = int(cfg.get("corr_blocks", 0))              # block-wise G_l(r) for error bars (0 = off)
+        self.n_expected = max(int(cfg.get("n_expected", 1)), 1)       # diagnostic samples per temperature in the run
         dcfg = dict(cfg.get("defects", {}))
         self.margin_thr = dcfg.get("margin_thr", D.MARGIN_THR)
         self.res_thr = dcfg.get("res_thr", 0.35)
@@ -69,6 +71,9 @@ class Diagnostics:
         self.lam_hist = np.zeros((R, 40))
         self.lam_sum = np.zeros(R)
         self.corr = np.zeros((R, 4, L // 2 + 1))
+        if self.corr_nb:
+            self.corr_blk = np.zeros((R, self.corr_nb, 4, L // 2 + 1))
+            self.corr_blk_n = np.zeros((R, self.corr_nb))
         self.pair_edges = np.linspace(0, L * 0.75, 41)
         if self.group is not None:
             g = self.group
@@ -128,7 +133,12 @@ class Diagnostics:
         self.lam_hist[t] += np.histogram(lam, bins=40, range=(0, 1))[0] / len(A)
         self.lam_sum[t] += lam.mean()
         if self.do_corr:
-            self.corr[t] += O.correlators(spins, self.lat)
+            c = O.correlators(spins, self.lat)
+            self.corr[t] += c
+            if self.corr_nb:
+                b = min(int((self.n_diag[t] - 1) * self.corr_nb / self.n_expected), self.corr_nb - 1)
+                self.corr_blk[t, b] += c
+                self.corr_blk_n[t, b] += 1
         lat = self.lat
         if t % self.defect_stride:
             return
@@ -180,6 +190,8 @@ class Diagnostics:
     def arrays(self):
         out = {k: getattr(self, k) for k in ("n_diag", "n_def", "split", "A_sum", "A_hist", "M_hist",
                                              "lam_hist", "lam_sum", "corr")}
+        if self.corr_nb:
+            out.update(corr_blk=self.corr_blk, corr_blk_n=self.corr_blk_n)
         if self.group is not None:
             out.update(h_counts=self.h_counts, h_amb=self.h_amb, h_und=self.h_und, h_linkamb=self.h_linkamb,
                        h_resid=self.h_resid, h_scan=self.h_scan, h_pair=self.h_pair,

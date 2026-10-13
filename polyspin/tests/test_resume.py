@@ -25,6 +25,9 @@ def cfg_for(kind):
                 diagnostics=dict(defects=dict(stride=3, coarse_blocks=[2, 4])))
     if kind == "pt2d":
         base.update(lattice=dict(dim=2, size=8), temperatures=dict(Tmin=0.1, Tmax=0.4, n=7, spacing="linear"))
+    elif kind == "blk2d":
+        base["diagnostics"] = dict(corr_blocks=4, defects=dict(stride=3, coarse_blocks=[2]))
+        base.update(lattice=dict(dim=2, size=8), temperatures=dict(Tmin=0.1, Tmax=0.4, n=5, spacing="linear"))
     elif kind == "cold2d":
         base.update(lattice=dict(dim=2, size=8), temperatures=dict(list=[0.02, 0.05, 0.1, 0.2]), exchange=False)
     elif kind == "pt3d":
@@ -54,7 +57,7 @@ def same(a, b):
 
 
 @pytest.mark.parametrize("kind,stops", [("pt2d", [(35,), (80,), (140,), (20, 95, 150)]),
-                                        ("cold2d", [(60,), (80,), (130,)]), ("pt3d", [(50,), (170,)])])
+                                        ("cold2d", [(60,), (80,), (130,)]), ("pt3d", [(50,), (170,)]), ("blk2d", [(70,), (150,)])])
 def test_resume_bit_exact(tmp_path, kind, stops):
     ref = tmp_path / "ref.h5"
     runner.run(cfg_for(kind), ref, verbose=False)
@@ -92,3 +95,12 @@ def test_resume_after_sigkill(tmp_path):
     runner.run(cfg, out, verbose=False)
     runner.run(cfg, ref.with_name("ref2.h5"), verbose=False)
     same(ref.with_name("ref2.h5"), out)
+
+
+def test_block_correlators_sum_to_total(tmp_path):
+    out = tmp_path / "b.h5"
+    runner.run(cfg_for("blk2d"), out, verbose=False)
+    with h5py.File(out) as f:
+        cb, nb, c, n = f["diag/corr_blk"][:], f["diag/corr_blk_n"][:], f["diag/corr"][:], f["diag/n_diag"][:]
+        assert cb.shape[1] == 4 and np.allclose(cb.sum(1), c) and np.array_equal(nb.sum(1), n)
+        assert (nb > 0).all()                                   # every block holds samples

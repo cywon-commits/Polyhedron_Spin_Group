@@ -52,6 +52,8 @@ def diag_means(r):
     n_all = n_all
     out = dict(split=d["split"] / n_all, A=d["A_sum"] / n_all, lam=d["lam_sum"] / n_all[:, 0],
                M_hist=d["M_hist"] / n_all, corr=d["corr"][:, :, :] / n_all[:, :, None])
+    if "corr_blk" in d:                                       # block means of G_l(r): (R, n_blocks, 4, L/2+1)
+        out["corr_blocks"] = d["corr_blk"] / np.maximum(d["corr_blk_n"], 1)[:, :, None, None]
     names = r["diag_attrs"].get("class_names")
     if names:
         npl = r["attrs"]["N"] * (1 if r["attrs"]["dim"] == 2 else 3)
