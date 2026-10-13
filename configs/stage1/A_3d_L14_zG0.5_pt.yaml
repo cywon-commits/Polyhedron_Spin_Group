@@ -1,0 +1,20 @@
+name: A_3d_L14_zG0.5_pt
+cut: A
+t0_prediction: T
+lattice: {dim: 3, size: 14}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 0.0, K: 0.5}
+temperatures:
+  list: [0.13242, 0.13337, 0.13433, 0.13532, 0.13628, 0.13724, 0.1382, 0.13911, 0.14001,
+    0.14088, 0.14174, 0.14261, 0.14341, 0.1442, 0.14496, 0.14567, 0.14636, 0.14693,
+    0.14748, 0.14806, 0.14888, 0.14994, 0.15119, 0.1525, 0.15386, 0.1553, 0.15682,
+    0.15834, 0.15995, 0.16159, 0.16184]
+sampling: {n_equil: 60000, n_meas: 60000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 750,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 2024
+exchange: true
+diagnostics:
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 1
