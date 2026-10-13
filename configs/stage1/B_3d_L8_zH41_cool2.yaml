@@ -1,0 +1,36 @@
+name: B_3d_L8_zH41_cool2
+cut: B
+t0_prediction: C
+lattice:
+  dim: 3
+  size: 8
+model:
+  J: 1.0
+  L: 0.0
+  G1: 0.0
+  zG: 0.5
+  zH4: 1.0
+  K: 0.5
+temperatures:
+  Tmin: 0.2
+  Tmax: 0.42
+  n: 24
+  spacing: linear
+sampling:
+  n_equil: 40000
+  n_meas: 40000
+  sweeps_per_exchange: 1
+  meas_every: 5
+  diag_every: 500
+  tune_every: 200
+  checkpoint_minutes: 20
+init: random
+seed: 1101
+exchange: true
+diagnostics:
+  defects:
+    stride: 3
+    coarse_blocks:
+    - 2
+    - 4
+stage: 1

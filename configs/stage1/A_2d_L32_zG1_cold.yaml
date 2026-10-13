@@ -4,7 +4,7 @@ t0_prediction: T
 lattice: {dim: 2, size: 32}
 model: {J: 1.0, L: 0.0, G1: 0.0, zG: 1.0, zH4: 0.0, K: 0.5}
 temperatures:
-  list: [0.02, 0.03411, 0.05816, 0.09918]
+  list: [0.02, 0.03391, 0.05751, 0.09751]
 sampling: {n_equil: 36000, n_meas: 36000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 450,
   tune_every: 200, checkpoint_minutes: 20}
 init: ordered

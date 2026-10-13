@@ -31,7 +31,9 @@ STAGES = {
             # follow-up 7: tier 3 is reduced -- no B first-order heating/cooling ladders; A 3D L=12 only zG=1.0
             # (pending the L=10 result) and 2D L=32 only zG=1.0 (H2)
             # H1 rule: no c_peak ~ N scaling or bimodality at L=10 (exponents 0.49, 0.12, 0.17) -> all three A points
-            tier3_points={3: [("A", 0.5, "pt"), ("A", 1.0, "pt"), ("A", 1.5, "pt")], 2: [("A", 1.0, "pt")]}),
+            # tier-3 request (Oct 13): 3D L=12 A zG=0.5,1.0,1.5 with a narrow 0.9-1.1 T_peak ladder ('narrow'),
+            # 2D L=32 A zG=1.0 with the usual ladder; no B first-order tier 3
+            tier3_points={3: [("A", 0.5, "narrow"), ("A", 1.0, "narrow"), ("A", 1.5, "narrow")], 2: [("A", 1.0, "pt")]}),
 }
 
 
@@ -53,9 +55,9 @@ def load_inputs(path):
     return json.load(open(path))
 
 
-def plan_ladder(entry, N, lo, hi, target=0.3):
+def plan_ladder(entry, N, lo, hi, target=0.3, min_ratio=1.01):
     e, c = interpolators(np.array(entry["T"]), np.array(entry["e"]), np.array(entry["c"]))
-    return place_temperatures(lo, hi, e, c, N, target, max_ratio=1.3, min_ratio=1.01)
+    return place_temperatures(lo, hi, e, c, N, target, max_ratio=1.3, min_ratio=min_ratio)
 
 
 def point_items(cut, dim, value, kind, sizes, db):
@@ -74,6 +76,13 @@ def point_items(cut, dim, value, kind, sizes, db):
             cold = np.geomspace(0.02, 0.45 * Tc, 4)
             items.append(dict(base, tag="cold", init="ordered", T=[round(float(t), 5) for t in cold],
                               exchange=False, sweeps=max(10000, S // 2)))
+        elif kind == "narrow":
+            # H1 size scaling: replicas concentrated in 0.9-1.1 T_peak; swap target 0.35 because the measured
+            # minimum at L=10 was 0.05-0.1 below the predicted one (goal: min >= 0.2, >= 10 round trips)
+            Ts = plan_ladder(e, N, 0.9 * Tc, 1.1 * Tc, target=0.35, min_ratio=1.001)
+            R = len(Ts)
+            S = max(S, int(math.ceil(75 * R * R / 2000.0)) * 1000)         # total sweeps ~ 75 R^2 (>= ~12 trips)
+            items.append(dict(base, tag="pt", init="ordered", T=Ts.tolist(), exchange=True, sweeps=S))
         else:
             heat = plan_ladder(e, N, 0.5 * Tc, 1.12 * Tc)
             cool = plan_ladder(e, N, 0.9 * Tc, 1.5 * Tc)

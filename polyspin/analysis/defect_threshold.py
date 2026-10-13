@@ -53,3 +53,47 @@ def h2_verdict(T, rho, f_ud, rise_frac=0.5, ud_limit=0.10):
     if f_ud[k] < ud_limit:
         return "defect-mediated", float(T[k])
     return "amplitude (frame melts first)", float(T[k])
+
+
+# ---------------------------------------------------------------------------------------------
+# H2 (2D) pre-registered scale-ratio rule (M4 tier-3 request, decision 1; thresholds fixed before L = 32).
+RB_FREE_LOW, RB_FREE_HIGH, RB_NONE_HIGH, RB_UD_LIMIT = 0.4, 0.7, 0.5, 0.10
+
+
+def _interp(T, y, t):
+    T, y = np.asarray(T, float), np.asarray(y, float)
+    ok = np.isfinite(y)
+    T, y = T[ok], y[ok]
+    if len(T) < 2 or t < T.min() or t > T.max():
+        return float("nan")
+    return float(np.interp(t, T, y))
+
+
+def rb_at(T, rb, f_ud4, Tc, fac):
+    """R_b and the b = 4 f_ud at fac * Tc by linear interpolation between neighbouring measured temperatures
+    (only finite points are used).  Returns (R_b, f_ud, usable) with usable = f_ud < 0.1 and R_b finite."""
+    t = fac * Tc
+    r, f = _interp(T, rb, t), _interp(T, f_ud4, t)
+    return r, f, bool(np.isfinite(r) and np.isfinite(f) and f < RB_UD_LIMIT)
+
+
+def rb_verdict_one(T, rb, f_ud4, Tc):
+    """Per-size verdict of the R_b rule: 'free' | 'none' | 'undetermined' plus the numbers used.  A value taken
+    where the b = 4 f_ud is >= 0.1 is not used (recorded in ``usable``); with an unusable value the size's
+    verdict is 'undetermined' unless the other value already decides 'none'."""
+    r9, f9, u9 = rb_at(T, rb, f_ud4, Tc, 0.9)
+    r11, f11, u11 = rb_at(T, rb, f_ud4, Tc, 1.1)
+    if u11 and r11 < RB_NONE_HIGH:
+        v = "none"
+    elif u9 and u11 and r9 <= RB_FREE_LOW and r11 >= RB_FREE_HIGH:
+        v = "free"
+    else:
+        v = "undetermined"
+    return dict(verdict=v, Tc=float(Tc), R09=r9, f09=f9, usable09=u9, R11=r11, f11=f11, usable11=u11)
+
+
+def rb_verdict(per_size):
+    """Combine sizes: 'free' / 'none' only if every size gives it; otherwise 'undetermined'.
+    ``per_size``: {L: rb_verdict_one(...)}."""
+    vs = {d["verdict"] for d in per_size.values()}
+    return vs.pop() if len(vs) == 1 else "undetermined"
