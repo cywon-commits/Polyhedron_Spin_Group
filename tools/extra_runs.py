@@ -29,9 +29,13 @@ elif a.job == "bwin":
                              sweeps=40000, Tc=0.35, key="B_3d_zH41"))
 for it in jobs:
     name, cfg = sr.config_of(it, seed=2024)
+    yml = cfgdir / f"{name}.yaml"
+    if yml.exists():                      # never regenerate an existing config: a changed config invalidates checkpoints
+        cfg = yaml.safe_load(yml.read_text())
     R = len(it["T"])
     print(f"{name:34s} R={R:3d} sweeps/phase={it['sweeps']} est {sr.hours(R, 3, it['L'], 2 * it['sweeps']):.1f} h", flush=True)
-    (cfgdir / f"{name}.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False, default_flow_style=None))
+    if not yml.exists():
+        yml.write_text(yaml.safe_dump(cfg, sort_keys=False, default_flow_style=None))
     h5 = out / f"{name}.h5"
     if a.plan_only or h5.exists():
         continue
