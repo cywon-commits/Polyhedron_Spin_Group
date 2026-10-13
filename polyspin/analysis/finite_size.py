@@ -70,3 +70,21 @@ def cumulant_trend(sizes, vmin):
     order = np.argsort(sizes)
     dev = dev[order]
     return bool(len(dev) >= 2 and np.all(np.diff(dev) > 0)), dev.tolist()
+
+
+# ---------------------------------------------------------------------------------------------
+# H1 rule for 3D A zG = 0.5 with L = 14 (fixed by the user BEFORE the run; see docs/H1_L14_rule.md)
+H1_A_FIRST, H1_A_CONT = 0.9, 0.7
+
+
+def h1_verdict_l14(bimodal_rule, a_12_14, dev12, dev14):
+    """'first-order' | 'continuous-consistent' | 'undetermined (weak first-order candidate)'.
+    bimodal_rule: corrected three-condition double-peak rule holds (ΔBIC_corr > 10, valley < 0.9, |2/3 - V_min|
+    moving away from 2/3 with L); a_12_14: pair exponent of c_peak between L = 12 and 14; dev12, dev14:
+    |2/3 - V_min| at L = 12, 14.  first-order: bimodal_rule or a >= 0.9; continuous-consistent: a <= 0.7 and
+    the deviation keeps decreasing (dev14 < dev12); else undetermined."""
+    if bimodal_rule or a_12_14 >= H1_A_FIRST:
+        return "first-order"
+    if a_12_14 <= H1_A_CONT and dev14 < dev12:
+        return "continuous-consistent"
+    return "undetermined (weak first-order candidate)"

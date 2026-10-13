@@ -53,3 +53,13 @@ def test_rb_rule():
     assert rb_verdict_one(T, low, bad, 1.0)["verdict"] == "undetermined"
     assert rb_verdict({24: dict(verdict="free"), 32: dict(verdict="none")}) == "undetermined"
     assert rb_verdict({24: dict(verdict="none"), 32: dict(verdict="none")}) == "none"
+
+
+def test_h1_verdict_l14():
+    from polyspin.analysis.finite_size import h1_verdict_l14 as v
+    assert v(True, 0.3, 1.0, 0.5) == "first-order"
+    assert v(False, 0.95, 1.0, 0.5) == "first-order"
+    assert v(False, 0.5, 1.0, 0.5) == "continuous-consistent"
+    assert v(False, 0.5, 1.0, 1.1).startswith("undetermined")      # deviation stops decreasing
+    assert v(False, 0.8, 1.0, 0.5).startswith("undetermined")      # 0.7 < a < 0.9
+    assert v(False, 0.7, 1.0, 0.5) == "continuous-consistent" and v(False, 0.9, 1.0, 0.5) == "first-order"
