@@ -63,3 +63,23 @@ def test_h1_verdict_l14():
     assert v(False, 0.5, 1.0, 1.1).startswith("undetermined")      # deviation stops decreasing
     assert v(False, 0.8, 1.0, 0.5).startswith("undetermined")      # 0.7 < a < 0.9
     assert v(False, 0.7, 1.0, 0.5) == "continuous-consistent" and v(False, 0.9, 1.0, 0.5) == "first-order"
+
+
+def test_e2_rules():
+    from polyspin.analysis.e2_rules import h12_verdict, h7_verdict, peak_location, peak_sigma
+    T = np.linspace(0.1, 0.5, 21)
+    y = np.exp(-((T - 0.31) / 0.05) ** 2)
+    assert abs(peak_location(T, y) - 0.31) < 0.01
+    ok = {16: dict(T1=0.10, s1=0.01, T2=0.30, s2=0.01), 24: dict(T1=0.11, s1=0.01, T2=0.30, s2=0.01)}
+    assert h7_verdict(ok)[0] == "separation supported"
+    shrink = {16: dict(T1=0.10, s1=0.01, T2=0.30, s2=0.01), 24: dict(T1=0.20, s1=0.01, T2=0.30, s2=0.01)}
+    assert h7_verdict(shrink)[0] == "undetermined"                       # gap shrank by 50%
+    noisy = {16: dict(T1=0.10, s1=0.1, T2=0.30, s2=0.1), 24: dict(T1=0.10, s1=0.1, T2=0.30, s2=0.1)}
+    assert h7_verdict(noisy)[0] == "undetermined"                        # gap < 3 sigma
+    assert h12_verdict(False, 0.5, 1.0, 0.5) == "continuous-consistent"
+    assert h12_verdict(False, float("nan"), 1.0, 0.5).startswith("undetermined")
+    assert h12_verdict(True, float("nan"), 1.0, 0.5) == "first-order"
+    rng = np.random.default_rng(0)
+    m = np.stack([rng.normal(1.0, 0.3 + 1.5 * np.exp(-((t - 0.3) / 0.05) ** 2), 400) for t in T])      # variance peaks at 0.3
+    loc, s = peak_sigma(T, m, 100)
+    assert 0.2 < loc < 0.4 and s > 0
