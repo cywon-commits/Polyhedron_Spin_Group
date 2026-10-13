@@ -1,5 +1,7 @@
 # M4 1단계 2층 보고 — 3D L = 10, 2D L = 24 완료 (56개 실행)
 
+> **정정 (Oct 13, 3층 의뢰서 반영)**: 이 보고서의 (a) 이중봉우리 ΔBIC 값과 그에 붙인 설명, (b) B 3D zH₄ = 1.0의 냉각 반값 온도 T_down(L = 8, 10 모두)은 틀렸다. 아래 "정정" 절과 `docs/M4_stage1_tier3_prep.md` 참조.
+
 2층(절단선 A zG = 0.5, 1.0, 1.5; 절단선 B zH₄ = 0.25, 1.0, 2.0)이 끝났다. 1층과 합쳐 `data/stage1/`에 요약 56개가 있다(원자료 HDF5는 `runs/stage1/`, git 제외). 표는 `tools/tier2_tables.py`가 만들고 `docs/tier2_tables.md`에 있다. 그림은 `docs/figures/stage1/`.
 **T = 0 해석값과 모순되는 결과는 없다.** 아래는 기대와 달랐던 점부터 쓴다.
 
