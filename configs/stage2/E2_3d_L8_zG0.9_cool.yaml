@@ -1,0 +1,20 @@
+name: E2_3d_L8_zG0.9_cool
+cut: E2
+t0_prediction: D
+lattice: {dim: 3, size: 8}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.9, zH4: 0.25, K: -0.25}
+temperatures:
+  list: [0.2268, 0.23058, 0.23409, 0.23747, 0.24086, 0.24433, 0.24793, 0.2517, 0.25523,
+    0.25851, 0.2617, 0.26492, 0.26833, 0.27235, 0.27871, 0.28727, 0.29756, 0.3077,
+    0.3188, 0.331, 0.34448, 0.35894, 0.37417, 0.378]
+sampling: {n_equil: 40000, n_meas: 40000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 500,
+  tune_every: 200, checkpoint_minutes: 20}
+init: random
+seed: 3001
+exchange: true
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2

@@ -1,0 +1,22 @@
+name: E2_2d_L16_zG1_heat
+cut: E2
+t0_prediction: D
+lattice: {dim: 2, size: 16}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 1.0, zH4: 0.25, K: -0.25}
+temperatures:
+  list: [0.0925, 0.09641, 0.10048, 0.10464, 0.10879, 0.11303, 0.11755, 0.12234, 0.12718,
+    0.13209, 0.13701, 0.14189, 0.14679, 0.15175, 0.15677, 0.16184, 0.16697, 0.17215,
+    0.17733, 0.18238, 0.18738, 0.19252, 0.19797, 0.20364, 0.20926, 0.21475, 0.22029,
+    0.22574, 0.23092, 0.23547, 0.23974, 0.24407, 0.24886, 0.25462, 0.26083, 0.26753,
+    0.27533, 0.28224]
+sampling: {n_equil: 40000, n_meas: 40000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 500,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 3001
+exchange: true
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2
