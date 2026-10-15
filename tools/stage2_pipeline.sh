@@ -2,7 +2,6 @@
 # After the 3D L=12 run: B 3D slab (T_c, latent heat), H6 Clausius-Clapeyron chains, H6 slab scan (diagonal interface).
 # Each stage is skipped when its output exists (safe to relaunch after a container restart).
 cd "$(dirname "$0")/.."
-while pgrep -f "tools/stage2_e2_l12.py" > /dev/null; do sleep 30; done
 mkdir -p data/stage2
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 [ -f data/stage2/slab_B3D_zH41_L12.npz ] || python3 tools/run_slab_B.py data/stage2/slab_B3D_zH41_L12.npz --size 12 --sweeps 80000 > runs/slab_B3D.log 2>&1
