@@ -18,8 +18,8 @@ LOCAL_W = 0.2
 def crossing_samples(zs, vs, ses, nboot=2000, seed=0, w=LOCAL_W):
     """Zero crossings of v(zG) by a LOCAL linear fit, bootstrapped by v ~ N(v, se) (all runs, seeds included).
     The velocity is not linear over the whole scan (front mobility differs on the two sides: slopes differ by ~2 at T = 0.10), so a global
-    fit is biased; the local window keeps the runs with |v| <= w max|v| (w = 0.2, fixed after seeing T = 0.10 only), needs >= 3 distinct zG
-    and falls back to the bracketing interpolation otherwise.  Returns (samples, pinned_width, n_moved)."""
+    or a joint local fit is biased; the window keeps the runs with |v| <= w max|v| (w = 0.2, fixed after seeing T = 0.10 only), each side needs >= 2
+    distinct zG, otherwise the bracketing interpolation is used.  Returns (samples, pinned_width, n_moved)."""
     zs, vs, ses = (np.asarray(x, float) for x in (zs, vs, ses))
     rng = np.random.default_rng(seed)
     se_ = np.maximum(ses, 1e-12)
@@ -27,16 +27,23 @@ def crossing_samples(zs, vs, ses, nboot=2000, seed=0, w=LOCAL_W):
     if moved.sum() < 2:
         return np.array([]), float("nan"), int(moved.sum())
     out = []
+    n = len(zs)
     for _ in range(nboot):
-        v = rng.normal(vs, se_)
+        idx = rng.integers(0, n, n)                                    # run-level resampling (seed variation) ...
+        zb, v = zs[idx], rng.normal(vs[idx], se_[idx])                  # ... plus measurement noise
         sel = np.abs(v) <= w * np.abs(v).max()
-        if len(np.unique(zs[sel])) >= 3:
-            m, c = np.polyfit(zs[sel], v[sel], 1)
-            if m != 0:
-                out.append(-c / m)
-                continue
-        order = np.argsort(zs)
-        vv, zz = v[order], zs[order]
+        zeros = []
+        for side in (v < 0, v > 0):                                     # one-sided fits: the two slopes differ, so a joint fit is biased
+            ss = sel & side
+            if len(np.unique(zb[ss])) >= 2:
+                m, c = np.polyfit(zb[ss], v[ss], 1)
+                if m != 0:
+                    zeros.append(-c / m)
+        if len(zeros) == 2:
+            out.append(float(np.mean(zeros)))
+            continue
+        order = np.argsort(zb)
+        vv, zz = v[order], zb[order]
         k = np.where(np.diff(np.sign(vv)) != 0)[0]
         if len(k):
             k = k[0]
@@ -83,3 +90,17 @@ def verdict(a, sa, pred=PRED):
     if len(inside) >= 2:
         return "undetermined (1-sigma interval contains " + " and ".join(inside) + ")"
     return "all predictions rejected at 1 sigma"
+
+
+def crossing_with_systematics(zs, vs, ses, windows=(0.1, 0.2, 0.3), nboot=2000):
+    """(zG*, sigma_total, sigma_boot, systematic, pinned_width, n_moved): the central value is the w = LOCAL_W bootstrap median; the
+    window-choice systematic is half the range of the medians over ``windows`` (rule fixed before T = 0.125-0.20 were analysed);
+    sigma_total^2 = sigma_boot^2 + systematic^2 + w_p^2 / 12."""
+    res = {w: crossing_samples(zs, vs, ses, nboot=nboot, w=w) for w in windows}
+    smp, wp, nm = res[LOCAL_W]
+    if len(smp) == 0:
+        return float("nan"), float("nan"), float("nan"), float("nan"), wp, nm
+    med = [np.median(res[w][0]) for w in windows if len(res[w][0])]
+    sysm = 0.5 * (max(med) - min(med))
+    sb = float(smp.std())
+    return float(np.median(smp)), float(np.sqrt(sb ** 2 + sysm ** 2 + wp ** 2 / 12.0)), sb, float(sysm), wp, nm
