@@ -62,3 +62,43 @@ def interface_velocity(ts, frac_F, skip=0.3):
     s2 = (np.sum((y - A @ coef) ** 2) / dof) if len(x) > 2 else 0.0
     se = np.sqrt(s2 / np.sum((x - x.mean()) ** 2)) if len(x) > 2 else np.nan
     return float(coef[0]), float(se)
+
+
+def cubic_energy_per_cluster(spins, nbr, params: Params):
+    """E3/N: the G x^3 inter-cluster term (all other couplings switched off).  The Hamiltonian is linear in G, so
+    d H / d zG = E3 / zG exactly (used in the Clausius-Clapeyron slope of the C|F boundary)."""
+    p3 = np.array([0.0, 0.0, 0.0, params.G, 0.0, 0.0])
+    return energy_total(spins, nbr, p3) / len(spins)
+
+
+def run_branch(lattice, params: Params, T, S0, n_equil, n_meas, seed=0, kappa=20.0, record_every=20, n_blocks=10):
+    """Single-temperature chain started in the ordered state S0 (one branch, no exchange): returns dict with <E>/N and
+    <dH/dzG>/N = <E3>/(N zG) with block errors, and the moment-class fractions (C, M2, F) averaged over the run (a
+    branch that stays in its class has fraction ~1 in its own class)."""
+    spins = np.empty((lattice.N,) + S0.shape)
+    spins[:] = S0
+    p, nbr, beta = params.array(), lattice.nbr, 1.0 / T
+    s = make_state(seed, 0)
+    d, dr = tune_steps(spins, nbr, p, beta, s, delta0=np.sqrt(T), n_rounds=15, block=20, use_overlap=True)
+    c = np.zeros((moves.N_COUNTERS, 2), dtype=np.int64)
+    for _ in range(n_equil):
+        moves.mc_sweep(spins, nbr, p, beta, d, dr, kappa, True, True, True, False, s, c)
+    E, E3, fr = [], [], []
+    for _ in range(0, n_meas, record_every):
+        for _ in range(record_every):
+            moves.mc_sweep(spins, nbr, p, beta, d, dr, kappa, True, True, True, False, s, c)
+        E.append(energy_total(spins, nbr, p) / lattice.N)
+        E3.append(cubic_energy_per_cluster(spins, nbr, params))
+        fr.append(moment_fractions(spins))
+    E, E3, fr = np.array(E), np.array(E3), np.array(fr)
+    dH = E3 / params.zG
+    def blk(x):
+        b = len(x) // n_blocks
+        m = x[: b * n_blocks].reshape(n_blocks, b).mean(1)
+        return float(m.mean()), float(m.std(ddof=1) / np.sqrt(n_blocks))
+    out = dict(T=T, zG=params.zG)
+    out["E"], out["E_err"] = blk(E)
+    out["dH"], out["dH_err"] = blk(dH)
+    out["frac"] = fr.mean(0).tolist()
+    out["frac_min_own"] = float(fr.min(0).max())
+    return out
