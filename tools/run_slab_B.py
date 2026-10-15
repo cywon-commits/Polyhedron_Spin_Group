@@ -16,7 +16,7 @@ def job(a):
     size, T, sweeps, seed, zG, zH = a
     lat = Lattice(3, size)
     P = Params.from_z(zG, zH, z=lat.z, K=0.5)
-    ts, fr, lay, es, _ = slab.run_slab_order(lat, P, T, collinear_state(4, 2), sweeps, record_every=max(sweeps // 200, 20), seed=seed)
+    ts, fr, lay, es, _ = slab.run_slab_order(lat, P, T, collinear_state(4, 2), sweeps, record_every=max(sweeps // 400, 10), seed=seed)
     v, se = slab.interface_velocity(ts, fr, skip=0.2)
     return dict(T=T, v=v, se=se, frac_end=float(fr[-1]), frac_start=float(fr[0]), e_end=float(es[-1]))
 
