@@ -1,0 +1,20 @@
+name: C_2d_L16_zG1.6_cool
+cut: C
+t0_prediction: F
+lattice: {dim: 2, size: 16}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 1.6, zH4: 0.0, K: 0.0}
+temperatures:
+  list: [0.2754, 0.28137, 0.28419, 0.28703, 0.2899, 0.2928, 0.29573, 0.29869, 0.30168,
+    0.30469, 0.30923, 0.31484, 0.3213, 0.32881, 0.33778, 0.34863, 0.36186, 0.3768,
+    0.3941, 0.41426, 0.43781, 0.459]
+sampling: {n_equil: 40000, n_meas: 40000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 500,
+  tune_every: 200, checkpoint_minutes: 20}
+init: random
+seed: 5001
+exchange: true
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2

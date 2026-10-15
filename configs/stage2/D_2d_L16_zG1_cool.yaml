@@ -1,0 +1,19 @@
+name: D_2d_L16_zG1_cool
+cut: D
+t0_prediction: degenerate
+lattice: {dim: 2, size: 16}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 1.0, zH4: 1.5, K: 0.5}
+temperatures:
+  list: [0.5715, 0.58191, 0.5891, 0.5952, 0.60116, 0.60717, 0.61324, 0.6198, 0.62785,
+    0.64455, 0.67153, 0.71049, 0.76165, 0.81974, 0.88746, 0.9525]
+sampling: {n_equil: 40000, n_meas: 40000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 500,
+  tune_every: 200, checkpoint_minutes: 20}
+init: random
+seed: 5001
+exchange: true
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2

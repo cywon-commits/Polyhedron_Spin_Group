@@ -9,7 +9,7 @@ import yaml
 
 # name -> (fixed model parameters, scanned parameter, values, T=0 predictions)
 CUTS = {
-    "A": (dict(K=0.5, zH4=0.0), "zG", [0.5, 1.0, 1.5, 2.0], ["T", "T", "T", "F"]),
+    "A": (dict(K=0.5, zH4=0.0), "zG", [0.3, 0.5, 1.0, 1.5, 2.0], ["T", "T", "T", "T", "F"]),      # 0.3: exploratory point (tricritical search)
     "B": (dict(K=0.5, zG=0.5), "zH4", [0.25, 1.0, 2.0], ["T", "C", "C"]),
     "C": (dict(K=0.0, zH4=0.0), "zG", [0.6, 1.0, 1.2, 1.6], ["T", "U", "U", "F"]),
     "D": (dict(K=0.5, zH4=1.5), "zG", [0.9, 1.0, 1.1], ["C", "degenerate", "F"]),
