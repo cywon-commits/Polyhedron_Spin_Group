@@ -83,3 +83,30 @@ def test_e2_rules():
     m = np.stack([rng.normal(1.0, 0.3 + 1.5 * np.exp(-((t - 0.3) / 0.05) ** 2), 400) for t in T])      # variance peaks at 0.3
     loc, s = peak_sigma(T, m, 100)
     assert 0.2 < loc < 0.4 and s > 0
+
+
+def _vec_to_norm(v):
+    return np.linalg.norm(v, axis=1)
+
+
+def test_m_density_rule_synthetic():
+    from polyspin.analysis.e2_rules import m_first_order, m_peak_structure
+    rng = np.random.default_rng(4)
+    n = 40000
+    # (a) disordered: isotropic Gaussian vector -> |m| is Maxwell-distributed (depleted at small m by the m^2 Jacobian)
+    dis = _vec_to_norm(rng.normal(0, 0.05, (n, 3)))
+    assert not m_peak_structure(dis)["two_peak"]                 # raw |m| would look like a peak away from 0
+    # (b) ordered continuous: m = m* n + noise -> single maximum at m*
+    nvec = rng.normal(size=(n, 3)); nvec /= np.linalg.norm(nvec, axis=1)[:, None]
+    ordc = _vec_to_norm(0.2 * nvec + rng.normal(0, 0.03, (n, 3)))
+    s = m_peak_structure(ordc)
+    assert not s["two_peak"] and abs(s["m_star"] - 0.2) < 0.06
+    # (c) first-order coexistence: half the time ~ 0 (disordered), half the time ordered at m* = 0.2
+    sw = rng.random(n) < 0.5
+    mix = np.where(sw, _vec_to_norm(rng.normal(0, 0.02, (n, 3))), _vec_to_norm(0.2 * nvec + rng.normal(0, 0.02, (n, 3))))
+    sm = m_peak_structure(mix)
+    assert sm["two_peak"] and sm["ratio"] < 0.9
+    # deepening with L: the valley ratio must decrease for the first-order rule
+    assert m_first_order({8: dict(two_peak=True, ratio=0.8), 12: dict(two_peak=True, ratio=0.5)})
+    assert not m_first_order({8: dict(two_peak=True, ratio=0.5), 12: dict(two_peak=True, ratio=0.8)})
+    assert not m_first_order({8: dict(two_peak=False, ratio=1.0), 12: dict(two_peak=True, ratio=0.5)})

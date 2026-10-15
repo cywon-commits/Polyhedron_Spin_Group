@@ -72,3 +72,66 @@ def h12_verdict(bimodal_rule, a_pair, dev_small, dev_large):
     if not np.isfinite(a_pair):
         return "first-order" if bimodal_rule else "undetermined (no interior c maximum at T1)"
     return h1_verdict_l14(bimodal_rule, a_pair, dev_small, dev_large)
+
+
+# ---------------------------------------------------------------------------------------------
+# H12 rule supplement (user decision, Oct 15; fixed in code + tests BEFORE the 3D L = 12 run, see docs/E2_rules.md).
+# m1 is a 3-component vector: even without order the density of |m1| is suppressed at small m by the m^2 Jacobian,
+# so |m1| histograms must not be used directly.  Corrected density: P~(m) = P(|m|) / m^2 (isotropic density).
+M_NBINS, M_SMOOTH, M_VALLEY, M_PEAK_FRAC, M_SIGMA, M_LEFT_FRAC = 18, (0.25, 0.5, 0.25), 0.9, 0.25, 3.0, 1 / 3
+
+
+def m_density(m, m_max, nbins=M_NBINS):
+    """Isotropic density P~(m) on bins of EQUAL VOLUME in m (edges m_max (k/nbins)^(1/3)): the counts per bin are
+    proportional to P(|m|)/m^2 integrated over the shell, without the singularity at m = 0.  Returns counts."""
+    edges = m_max * (np.arange(nbins + 1) / nbins) ** (1.0 / 3.0)
+    return np.histogram(np.asarray(m, float), bins=edges)[0].astype(float), edges
+
+
+def m_peak_structure(m, nblocks=10, nbins=M_NBINS):
+    """Peak structure of P~(m) for one temperature.  Smoothing with [1,2,1]/4; a 'two-peak' structure needs a left
+    peak in the lowest third of the bins (the m ~ 0 maximum) and a right peak m* beyond it, each >= 25% of the global
+    maximum, with valley/min(peak) < 0.9 AND a valley deficit > 3 sigma (sigma: delete-one block jackknife of the
+    valley-vs-lower-peak difference).  Returns dict(two_peak, ratio, n_peaks, m_star)."""
+    m = np.asarray(m, float)
+    m_max = 1.2 * float(np.percentile(m, 99))
+    k = np.array(M_SMOOTH)
+
+    def smooth_dens(x):
+        c, edges = m_density(x, m_max, nbins)
+        c = c / max(c.sum(), 1.0)
+        p = np.pad(c, 1, mode="edge")
+        return np.convolve(p, k, mode="valid"), edges
+
+    s, edges = smooth_dens(m)
+    peaks = [i for i in range(len(s)) if (i == 0 or s[i] >= s[i - 1]) and (i == len(s) - 1 or s[i] > s[i + 1]) and s[i] >= M_PEAK_FRAC * s.max()]
+    out = dict(two_peak=False, ratio=1.0, n_peaks=len(peaks), m_star=float(m_max * ((peaks[-1] + 0.5) / nbins) ** (1 / 3)) if peaks else float("nan"))
+    left = [p for p in peaks if p <= M_LEFT_FRAC * nbins]
+    right = [p for p in peaks if left and p > left[0]]
+    if not left or not right:
+        return out
+    pl, pr = left[0], right[int(np.argmax([s[p] for p in right]))]
+    vi = pl + int(np.argmin(s[pl:pr + 1]))
+    ratio = float(s[vi] / min(s[pl], s[pr]))
+    # jackknife error of the deficit  min(peak) - valley
+    n = len(m); b = n // nblocks
+    deficits = []
+    for j in range(nblocks):
+        keep = np.concatenate([np.arange(q * b, (q + 1) * b) for q in range(nblocks) if q != j])
+        sj, _ = smooth_dens(m[keep])
+        deficits.append(min(sj[pl], sj[pr]) - sj[vi])
+    deficits = np.array(deficits)
+    sigma = float(np.sqrt((nblocks - 1) / nblocks * np.sum((deficits - deficits.mean()) ** 2)))
+    deficit = float(min(s[pl], s[pr]) - s[vi])
+    out.update(two_peak=bool(ratio < M_VALLEY and deficit > M_SIGMA * sigma), ratio=ratio)
+    return out
+
+
+def m_first_order(per_size):
+    """per_size: {L: m_peak_structure(...)}.  First order iff every size has a two-peak structure and the valley
+    ratio decreases with L (the valley deepens).  Needs >= 2 sizes."""
+    Ls = sorted(per_size)
+    if len(Ls) < 2 or not all(per_size[L]["two_peak"] for L in Ls):
+        return False
+    r = [per_size[L]["ratio"] for L in Ls]
+    return bool(np.all(np.diff(r) < 0))
