@@ -8,6 +8,8 @@ export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 echo "done slab_B3D" >> runs/stage2/progress.log
 [ -f data/stage2/cc_chains.npz ] || python3 tools/run_cc_chains.py data/stage2/cc_chains.npz --size 24 > runs/cc_chains.log 2>&1
 echo "done cc_chains" >> runs/stage2/progress.log
-[ -f data/stage2/slab_H6_scan.npz ] || python3 tools/run_slab_scan.py data/stage2/slab_H6_scan.npz --size 24 --T 0.10 0.125 0.15 0.175 0.20 \
-    --zG $(python3 -c "print(' '.join(f'{1.0+0.005*i:.3f}' for i in range(21)))") --sweeps 100000 --kinds diag > runs/slab_H6.log 2>&1
-echo "done slab_H6_scan" >> runs/stage2/progress.log
+ZG=$(python3 -c "print(' '.join(f'{1.0+0.005*i:.3f}' for i in range(21)))")
+for T in 0.10 0.125 0.15 0.175 0.20; do   # one file per temperature: a container restart loses at most one temperature
+  [ -f data/stage2/slab_H6_T$T.npz ] || python3 tools/run_slab_scan.py data/stage2/slab_H6_T$T.npz --size 24 --T $T --zG $ZG --sweeps 100000 --kinds diag > runs/slab_H6_T$T.log 2>&1
+  echo "done slab_H6_T$T" >> runs/stage2/progress.log
+done

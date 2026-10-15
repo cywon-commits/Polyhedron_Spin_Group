@@ -1,12 +1,12 @@
 """H6 joint fit: slab scan (run_slab_scan.py npz, diagonal interface) + Clausius-Clapeyron chains (run_cc_chains.py npz).
-Usage: python tools/fit_cc.py scan.npz chains.npz [--kind diag]"""
+Usage: python tools/fit_cc.py chains.npz scan_T0.10.npz scan_T0.125.npz ... [--kind diag]"""
 import argparse, json
 import numpy as np
 from polyspin.analysis.cc_fit import PRED, crossing_samples, fit_a, verdict
 
-ap = argparse.ArgumentParser(); ap.add_argument("scan"); ap.add_argument("chains"); ap.add_argument("--kind", default="diag"); ap.add_argument("--J", type=float, default=1.0)
+ap = argparse.ArgumentParser(); ap.add_argument("chains"); ap.add_argument("scan", nargs="+"); ap.add_argument("--kind", default="diag"); ap.add_argument("--J", type=float, default=1.0)
 a = ap.parse_args()
-scan = json.loads(str(np.load(a.scan, allow_pickle=False)["results"])); ch = json.loads(str(np.load(a.chains, allow_pickle=False)["results"]))
+scan = [r for p in a.scan for r in json.loads(str(np.load(p, allow_pickle=False)["results"]))]; ch = json.loads(str(np.load(a.chains, allow_pickle=False)["results"]))
 rng = np.random.default_rng(5)
 Ts = sorted({r["T"] for r in scan})
 rows = []
