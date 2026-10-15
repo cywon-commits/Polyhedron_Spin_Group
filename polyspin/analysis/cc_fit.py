@@ -12,30 +12,44 @@ import numpy as np
 PRED = {"harmonic + labels": 0.382, "labels only": 0.224, "harmonic only": 0.158}
 
 
-def crossing_samples(zs, vs, ses, nboot=2000, seed=0):
-    """Zero crossings of a linear fit of v(zG) over moved runs (|v| > 3 se), bootstrapped by v ~ N(v, se).
-    Returns (samples (nboot,), pinned_width, n_moved)."""
+LOCAL_W = 0.2
+
+
+def crossing_samples(zs, vs, ses, nboot=2000, seed=0, w=LOCAL_W):
+    """Zero crossings of v(zG) by a LOCAL linear fit, bootstrapped by v ~ N(v, se) (all runs, seeds included).
+    The velocity is not linear over the whole scan (front mobility differs on the two sides: slopes differ by ~2 at T = 0.10), so a global
+    fit is biased; the local window keeps the runs with |v| <= w max|v| (w = 0.2, fixed after seeing T = 0.10 only), needs >= 3 distinct zG
+    and falls back to the bracketing interpolation otherwise.  Returns (samples, pinned_width, n_moved)."""
     zs, vs, ses = (np.asarray(x, float) for x in (zs, vs, ses))
     rng = np.random.default_rng(seed)
-    moved = np.abs(vs) > 3 * np.maximum(ses, 1e-12)
+    se_ = np.maximum(ses, 1e-12)
+    moved = np.abs(vs) > 3 * se_
     if moved.sum() < 2:
         return np.array([]), float("nan"), int(moved.sum())
     out = []
     for _ in range(nboot):
-        v = rng.normal(vs[moved], np.maximum(ses[moved], 1e-12))
-        A = np.stack([zs[moved], np.ones(moved.sum())], 1)
-        (m, c), *_ = np.linalg.lstsq(A, v, rcond=None)
-        if m != 0:
-            out.append(-c / m)
+        v = rng.normal(vs, se_)
+        sel = np.abs(v) <= w * np.abs(v).max()
+        if len(np.unique(zs[sel])) >= 3:
+            m, c = np.polyfit(zs[sel], v[sel], 1)
+            if m != 0:
+                out.append(-c / m)
+                continue
+        order = np.argsort(zs)
+        vv, zz = v[order], zs[order]
+        k = np.where(np.diff(np.sign(vv)) != 0)[0]
+        if len(k):
+            k = k[0]
+            out.append(zz[k] - vv[k] * (zz[k + 1] - zz[k]) / (vv[k + 1] - vv[k]))
     out = np.array(out)
+    if len(out) == 0:
+        return out, float("nan"), int(moved.sum())
     z0 = np.median(out)
-    below = zs[moved & (vs < 0) & (zs < z0)] if (vs[moved] < 0).any() else np.array([])
-    above = zs[moved & (vs > 0) & (zs > z0)] if (vs[moved] > 0).any() else np.array([])
-    # sign convention: v = dF_F/dt; below/above the crossing the sign flips; pinned zG = unmoved ones near the crossing
     lo = zs[moved & (zs < z0)].max() if (moved & (zs < z0)).any() else zs.min()
     hi = zs[moved & (zs > z0)].min() if (moved & (zs > z0)).any() else zs.max()
     pinned = zs[(~moved) & (zs > lo) & (zs < hi)]
-    w_p = float(pinned.max() - pinned.min() + (zs[1] - zs[0] if len(zs) > 1 else 0)) if len(pinned) else 0.0
+    step = float(np.min(np.diff(np.unique(zs)))) if len(np.unique(zs)) > 1 else 0.0
+    w_p = float(pinned.max() - pinned.min() + step) if len(pinned) else 0.0
     return out, w_p, int(moved.sum())
 
 

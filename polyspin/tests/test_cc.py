@@ -72,3 +72,15 @@ def test_slab_tuning_does_not_move_the_interface():
     P = Params.from_z(1.04, 1.5, z=4, K=0.5)
     ts, fr, e, _ = slab.run_slab(lat, P, 0.1, collinear_state(4, 2), collinear_state(4, 0), 5, record_every=5, seed=1, kind="diag")
     assert abs(fr[0, 2] - 0.5) < 0.1                           # first record (5 sweeps after the start) is still ~half F
+
+
+def test_crossing_is_unbiased_for_asymmetric_velocity():
+    from polyspin.analysis.cc_fit import crossing_samples
+    zs = np.repeat(np.arange(1.0, 1.1001, 0.005), 3)
+    v = np.where(zs < 1.04, 0.011 * (zs - 1.04), 0.022 * (zs - 1.04))        # slopes differ by 2 on the two sides
+    ses = np.full_like(zs, 3e-6)
+    smp, wp, nm = crossing_samples(zs, v, ses)
+    assert abs(np.median(smp) - 1.04) < 0.001                             # a global linear fit would give ~1.0353
+    zg = np.arange(1.0, 1.1001, 0.005); A = np.stack([zg, np.ones_like(zg)], 1)
+    m, c = np.linalg.lstsq(A, np.where(zg < 1.04, 0.011 * (zg - 1.04), 0.022 * (zg - 1.04)), rcond=None)[0]
+    assert abs(-c / m - 1.04) > 0.003
