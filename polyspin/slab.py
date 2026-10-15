@@ -38,7 +38,7 @@ def run_slab(lattice, params: Params, T, S_C, S_F, n_sweeps, record_every=50, se
     spins = make_slab(lattice, S_C, S_F, kind=kind)
     p, nbr, beta = params.array(), lattice.nbr, 1.0 / T
     s = make_state(seed, 0)
-    d, dr = tune_steps(spins, nbr, p, beta, s, delta0=np.sqrt(T), n_rounds=15, block=20, use_overlap=True)
+    d, dr = tune_steps(spins.copy(), nbr, p, beta, s, delta0=np.sqrt(T), n_rounds=15, block=20, use_overlap=True)   # on a COPY: the slab must not move during tuning
     c = np.zeros((moves.N_COUNTERS, 2), dtype=np.int64)
     ts, fr, es = [], [], []
     for sw in range(0, n_sweeps, record_every):
@@ -138,7 +138,7 @@ def run_slab_order(lattice, params: Params, T, S_ordered, n_sweeps, record_every
     spins = make_ordered_disordered(lattice, S_ordered, axis=axis, seed=seed)
     p, nbr, beta = params.array(), lattice.nbr, 1.0 / T
     s = make_state(seed, 0)
-    d, dr = tune_steps(spins, nbr, p, beta, s, delta0=np.sqrt(T), n_rounds=15, block=20, use_overlap=True)
+    d, dr = tune_steps(spins.copy(), nbr, p, beta, s, delta0=np.sqrt(T), n_rounds=15, block=20, use_overlap=True)   # on a COPY
     c = np.zeros((moves.N_COUNTERS, 2), dtype=np.int64)
     ts, frac, lay, es = [], [], [], []
     for sw in range(0, n_sweeps, record_every):
@@ -148,3 +148,21 @@ def run_slab_order(lattice, params: Params, T, S_ordered, n_sweeps, record_every
         ts.append(sw + record_every); lay.append(q); frac.append((q > thr).mean())
         es.append(energy_total(spins, nbr, p) / lattice.N)
     return np.array(ts), np.array(frac), np.array(lay), np.array(es), spins
+
+
+def transient_velocity(ts, frac, lo=0.05, hi=0.95, min_pts=4):
+    """Interface velocity from the INITIAL transient: least-squares slope of the phase fraction over the records from the start
+    until it first leaves (lo, hi) (saturation) or the run ends; at least ``min_pts`` records are used.  Returns (v, se, n_used,
+    saturated).  Far from coexistence the front crosses the slab quickly (large |v|); at coexistence it does not move (|v| ~ 0),
+    so v(zG) or v(T) has a clean zero crossing even when most runs end in a pure phase."""
+    ts, frac = np.asarray(ts, float), np.asarray(frac, float)
+    out = np.where((frac <= lo) | (frac >= hi))[0]
+    n = int(out[0]) + 1 if len(out) else len(ts)
+    n = max(n, min(min_pts, len(ts)))
+    x, y = ts[:n], frac[:n]
+    A = np.stack([x, np.ones_like(x)], 1)
+    coef, *_ = np.linalg.lstsq(A, y, rcond=None)
+    dof = max(n - 2, 1)
+    s2 = np.sum((y - A @ coef) ** 2) / dof
+    se = float(np.sqrt(s2 / max(np.sum((x - x.mean()) ** 2), 1e-300)))
+    return float(coef[0]), se, n, bool(len(out))

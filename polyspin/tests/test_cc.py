@@ -55,3 +55,20 @@ def test_layer_nematic_and_ordered_disordered_slab():
     P = Params.from_z(0.5, 1.0, z=6, K=0.5)
     ts, fr, lay, es, _ = slab.run_slab_order(lat, P, 0.2, S0, 100, record_every=50, seed=2)
     assert lay.shape == (2, 6) and fr[0] >= 0.4
+
+
+def test_transient_velocity_resolves_fast_and_slow_fronts():
+    ts = np.arange(5, 2005, 5.0)
+    slow = np.clip(0.5 + 2e-5 * ts, 0, 1)                      # never saturates
+    fast = np.clip(0.5 + 2e-3 * ts, 0, 1)                      # saturates after 250 sweeps, then plateau
+    vs, _, ns, sats = slab.transient_velocity(ts, slow)
+    vf, _, nf, satf = slab.transient_velocity(ts, fast)
+    assert abs(vs - 2e-5) < 1e-6 and not sats and ns == len(ts)
+    assert abs(vf - 2e-3) < 2e-4 and satf and nf < 80          # a plateau after saturation must not dilute the slope
+
+
+def test_slab_tuning_does_not_move_the_interface():
+    lat = Lattice(2, 8)
+    P = Params.from_z(1.04, 1.5, z=4, K=0.5)
+    ts, fr, e, _ = slab.run_slab(lat, P, 0.1, collinear_state(4, 2), collinear_state(4, 0), 5, record_every=5, seed=1, kind="diag")
+    assert abs(fr[0, 2] - 0.5) < 0.1                           # first record (5 sweeps after the start) is still ~half F

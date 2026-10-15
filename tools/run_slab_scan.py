@@ -19,9 +19,9 @@ def job(a):
     lat = Lattice(2, size)
     P = Params.from_z(zG, zH, z=4, K=K)
     ts, fr, e, _ = slab.run_slab(lat, P, T, collinear_state(4, 2), collinear_state(4, 0), sweeps,
-                                 record_every=max(sweeps // 200, 10), seed=seed, kind=kind)
-    v, se = slab.interface_velocity(ts, fr[:, 2], skip=0.2)
-    return dict(T=T, zG=zG, kind=kind, v=v, se=se, fF_end=float(fr[-1, 2]), fC_end=float(fr[-1, 0]))
+                                 record_every=max(sweeps // 800, 5), seed=seed, kind=kind)
+    v, se, nu, sat = slab.transient_velocity(ts, fr[:, 2])
+    return dict(T=T, zG=zG, kind=kind, v=v, se=se, n_used=nu, saturated=sat, fF_end=float(fr[-1, 2]), fC_end=float(fr[-1, 0]))
 
 
 def crossing(zs, vs, ses):
