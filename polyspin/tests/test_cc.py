@@ -44,3 +44,14 @@ def test_cc_fit_recovers_a_and_b():
     zs = np.arange(1.0, 1.101, 0.005); vs = 1e-5 * (zs - 1.05) * 40; ses = np.full_like(zs, 4e-6)
     smp, wp, nm = crossing_samples(zs, vs, ses)
     assert abs(np.median(smp) - 1.05) < 0.003 and nm >= 5
+
+
+def test_layer_nematic_and_ordered_disordered_slab():
+    lat = Lattice(3, 6)
+    S0 = collinear_state(4, 2)
+    sp = slab.make_ordered_disordered(lat, S0, axis=0, frac=0.5, seed=1)
+    q = slab.layer_nematic(sp, lat, axis=0)
+    assert q[:3].min() > 0.99 and q[3:].max() < 0.35             # aligned collinear clusters: 1; random layers: small
+    P = Params.from_z(0.5, 1.0, z=6, K=0.5)
+    ts, fr, lay, es, _ = slab.run_slab_order(lat, P, 0.2, S0, 100, record_every=50, seed=2)
+    assert lay.shape == (2, 6) and fr[0] >= 0.4

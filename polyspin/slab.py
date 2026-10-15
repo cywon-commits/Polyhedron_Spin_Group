@@ -102,3 +102,49 @@ def run_branch(lattice, params: Params, T, S0, n_equil, n_meas, seed=0, kappa=20
     out["frac"] = fr.mean(0).tolist()
     out["frac_min_own"] = float(fr.min(0).max())
     return out
+
+
+# ---------------------------------------------------------------------------------------------
+# ordered | disordered slab (first-order nematic transition of cut B; decision Oct 13: slab tool also applied to B 3D zH4 = 1.0)
+def layer_nematic(spins, lattice, axis=0):
+    """Nematic order of every layer perpendicular to ``axis``: the largest eigenvalue of the layer-averaged
+    traceless tensor Q = < (3 s s^T - 1) / 2 >  (all spins of all clusters).  ~1 for aligned collinear clusters, ~1/sqrt(layer spins) for a
+    disordered layer."""
+    L = lattice.size
+    Qc = (1.5 * np.einsum("cni,cnj->cij", spins, spins) - 0.5 * spins.shape[1] * np.eye(3)) / spins.shape[1]       # per cluster
+    out = np.empty(L)
+    layer = lattice.coords[:, axis]
+    for x in range(L):
+        Qb = Qc[layer == x].mean(0)
+        out[x] = np.linalg.eigvalsh(Qb)[-1]
+    return out
+
+
+def make_ordered_disordered(lattice, S_ordered, axis=0, frac=0.5, seed=0):
+    """Clusters with coordinate along ``axis`` < frac L ordered (S_ordered), the others uniformly random spins."""
+    rng = np.random.default_rng(seed)
+    L = lattice.size
+    left = lattice.coords[:, axis] < int(round(frac * L))
+    spins = rng.normal(size=(lattice.N,) + S_ordered.shape)
+    spins /= np.linalg.norm(spins, axis=2, keepdims=True)
+    spins[left] = S_ordered
+    return spins
+
+
+def run_slab_order(lattice, params: Params, T, S_ordered, n_sweeps, record_every=50, seed=0, kappa=20.0, axis=0,
+                   thr=0.45, n_tune=4000):
+    """Ordered|disordered slab at fixed T.  Returns (sweeps, ordered fraction of layers (S_layer > thr), layer-resolved
+    nematic order (k, L), energies per cluster (k,))."""
+    spins = make_ordered_disordered(lattice, S_ordered, axis=axis, seed=seed)
+    p, nbr, beta = params.array(), lattice.nbr, 1.0 / T
+    s = make_state(seed, 0)
+    d, dr = tune_steps(spins, nbr, p, beta, s, delta0=np.sqrt(T), n_rounds=15, block=20, use_overlap=True)
+    c = np.zeros((moves.N_COUNTERS, 2), dtype=np.int64)
+    ts, frac, lay, es = [], [], [], []
+    for sw in range(0, n_sweeps, record_every):
+        for _ in range(record_every):
+            moves.mc_sweep(spins, nbr, p, beta, d, dr, kappa, True, True, True, False, s, c)
+        q = layer_nematic(spins, lattice, axis)
+        ts.append(sw + record_every); lay.append(q); frac.append((q > thr).mean())
+        es.append(energy_total(spins, nbr, p) / lattice.N)
+    return np.array(ts), np.array(frac), np.array(lay), np.array(es), spins
