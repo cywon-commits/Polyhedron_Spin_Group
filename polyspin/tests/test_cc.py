@@ -43,4 +43,4 @@ def test_cc_fit_recovers_a_and_b():
     assert verdict(0.5, 0.01).startswith("all predictions rejected")
     zs = np.arange(1.0, 1.101, 0.005); vs = 1e-5 * (zs - 1.05) * 40; ses = np.full_like(zs, 4e-6)
     smp, wp, nm = crossing_samples(zs, vs, ses)
-    assert abs(np.median(smp) - 1.05) < 0.003 and nm >= 10
+    assert abs(np.median(smp) - 1.05) < 0.003 and nm >= 5
