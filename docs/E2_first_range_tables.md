@@ -17,8 +17,9 @@
 
 | 3D | 1 | 8 | 0.1903 | 0.0012 | 0.2540 | 0.0011 | 0.2548 (yes) | 0.0010 | 0.2540 | 0.0637 | 0.0048 | 82.0 |
 | 3D | 1 | 10 | 0.1904 | 0.0008 | 0.2547 | 0.0007 | 0.2543 (yes) | 0.0008 | 0.2543 | 0.0639 | 0.0033 | 58.1 |
+| 3D | 1 | 12 | 0.1913 | 0.0005 | 0.2285 | 0.0004 | n/a (edge max) | nan | 0.2285 | 0.0372 | 0.0019 | 14.6 |
 
-**H7, 3D zG = 1: separation supported** (gap by L: {8: 0.064, 10: 0.064}; all > 3 sigma: True; gap kept >= 70%: True)
+**H7, 3D zG = 1: undetermined** (gap by L: {8: 0.064, 10: 0.064, 12: 0.037}; all > 3 sigma: True; gap kept >= 70%: False)
 
 
 ## H12: C -> D transition at T1 (heating ladders)
@@ -42,6 +43,7 @@
 
 | 3D | 1 | 8 | 0.1903 | 14.1 (yes) | 0.1855 | 3.5 | -18.8 | 1.00 | 0.66659 | 1.9 |
 | 3D | 1 | 10 | 0.1904 | 15.1 (yes) | 0.1899 | 7.4 | -17.9 | 1.00 | 0.66662 | 2.8 |
+| 3D | 1 | 12 | 0.1913 | 16.1 (yes) | 0.1879 | 5.1 | -20.8 | 1.00 | 0.66664 | 3.8 |
 
-**H12, 3D zG = 1: continuous-consistent** (a(c max, L 8->10) = 0.10; supplementary chi1 exponent = 0.63; |2/3-V_min| = 7.54e-05 -> 4.20e-05; double-peak rule at T1: no)
+**H12, 3D zG = 1: continuous-consistent** (a(c max, L 8->12) = 0.10; supplementary chi1 exponent = 0.58; |2/3-V_min| = 7.54e-05 -> 2.44e-05; double-peak rule at T1: no)
 
