@@ -1,0 +1,21 @@
+name: A_3d_L10_zG0.3_pt
+cut: A
+t0_prediction: T
+lattice: {dim: 3, size: 10}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.3, zH4: 0.0, K: 0.5}
+temperatures:
+  list: [0.08032, 0.08144, 0.08255, 0.08367, 0.08477, 0.08586, 0.08694, 0.08802, 0.08909,
+    0.09015, 0.09119, 0.09221, 0.0932, 0.09412, 0.09498, 0.09583, 0.09667, 0.09752,
+    0.0984, 0.09934, 0.1004, 0.10155, 0.10277, 0.10403, 0.10536, 0.10675, 0.10824,
+    0.10986, 0.11163, 0.11353, 0.11552, 0.11753, 0.11959, 0.12048]
+sampling: {n_equil: 44000, n_meas: 44000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 550,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 6001
+exchange: true
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2

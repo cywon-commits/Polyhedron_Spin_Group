@@ -1,0 +1,20 @@
+name: A_3d_L8_zG0.3_pt
+cut: A
+t0_prediction: T
+lattice: {dim: 3, size: 8}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.3, zH4: 0.0, K: 0.5}
+temperatures:
+  list: [0.08032, 0.08188, 0.08344, 0.08498, 0.0865, 0.08801, 0.0895, 0.09097, 0.09239,
+    0.09374, 0.09496, 0.09614, 0.09732, 0.09856, 0.09992, 0.10151, 0.10321, 0.10503,
+    0.10698, 0.10912, 0.11154, 0.11422, 0.11702, 0.11989, 0.12048]
+sampling: {n_equil: 24000, n_meas: 24000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 300,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 6001
+exchange: true
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2
