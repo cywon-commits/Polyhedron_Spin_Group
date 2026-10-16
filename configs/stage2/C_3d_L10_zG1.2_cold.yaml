@@ -1,0 +1,18 @@
+name: C_3d_L10_zG1.2_cold
+cut: C
+t0_prediction: U
+lattice: {dim: 3, size: 10}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 1.2, zH4: 0.0, K: 0.0}
+temperatures:
+  list: [0.02, 0.03091, 0.04778, 0.07385]
+sampling: {n_equil: 20000, n_meas: 20000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 250,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 7001
+exchange: false
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2
