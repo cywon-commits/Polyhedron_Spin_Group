@@ -84,3 +84,20 @@ def test_crossing_is_unbiased_for_asymmetric_velocity():
     zg = np.arange(1.0, 1.1001, 0.005); A = np.stack([zg, np.ones_like(zg)], 1)
     m, c = np.linalg.lstsq(A, np.where(zg < 1.04, 0.011 * (zg - 1.04), 0.022 * (zg - 1.04)), rcond=None)[0]
     assert abs(-c / m - 1.04) > 0.003
+
+
+def test_crossing_robust_percentile_error_and_wedge_rule():
+    from polyspin.analysis.cc_fit import crossing_robust, crossing_with_systematics, wedge_verdict
+    # sparse sign change (like the M2|F slab): few runs near zero, the rest saturated -> rare two-point resamples inflate the std
+    Ts = np.repeat(np.arange(0.20, 0.2801, 0.005), 3)
+    v = np.where(Ts < 0.2325, 2.5e-4 * (0.2325 - Ts) / 0.0325 * 8, -6e-4 * (Ts - 0.2325) / 0.0475 * 8)
+    rng = np.random.default_rng(3)
+    v = v + rng.normal(0, 3e-5, len(v)); ses = np.full_like(Ts, 3e-5)
+    r = crossing_robust(Ts, v, ses)
+    assert abs(r["zero"] - 0.2325) < 0.004 and r["sigma_pct"] <= r["sigma_std"] + 1e-12
+    assert r["sigma_total"] < 0.02
+    w = wedge_verdict(0.2324, 0.0020, 0.2500, 0.0040, 0.243, 0.265)
+    assert w["confirmed"] and w["location"]
+    assert not wedge_verdict(0.2324, 0.01, 0.2500, 0.01, 0.243, 0.265)["confirmed"]      # difference below 2 sigma
+    assert not wedge_verdict(0.26, 0.001, 0.25, 0.001, 0.243, 0.265)["confirmed"]        # T1 >= T2: no wedge
+    assert not wedge_verdict(0.2324, 0.002, 0.2500, 0.004, 0.30, 0.265)["location"]      # T1 prediction off by more than 0.03

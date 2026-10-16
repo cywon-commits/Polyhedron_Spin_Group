@@ -104,3 +104,28 @@ def crossing_with_systematics(zs, vs, ses, windows=(0.1, 0.2, 0.3), nboot=2000):
     sysm = 0.5 * (max(med) - min(med))
     sb = float(smp.std())
     return float(np.median(smp)), float(np.sqrt(sb ** 2 + sysm ** 2 + wp ** 2 / 12.0)), sb, float(sysm), wp, nm
+
+
+def crossing_robust(zs, vs, ses, windows=(0.1, 0.2, 0.3), nboot=2000):
+    """New principle (decision Oct 16): the PRIMARY zero-crossing error is the half-width of the 16-84% percentile interval of the bootstrap
+    samples (robust to the rare two-point extrapolation resamples that inflate the standard deviation), not the standard deviation.
+    Returns dict(zero, sigma_total, sigma_pct, sigma_std, systematic, pinned_width, n_moved): sigma_total^2 = sigma_pct^2 + systematic^2 + w_p^2/12
+    (same window systematic and pinning term as crossing_with_systematics); sigma_std is reported alongside.  Not applied retroactively to results
+    obtained before this principle (H6, the 2D M2 wedge)."""
+    res = {w: crossing_samples(zs, vs, ses, nboot=nboot, w=w) for w in windows}
+    smp, wp, nm = res[LOCAL_W]
+    if len(smp) == 0:
+        return dict(zero=float("nan"), sigma_total=float("nan"), sigma_pct=float("nan"), sigma_std=float("nan"), systematic=float("nan"), pinned_width=wp, n_moved=nm)
+    lo, hi = np.percentile(smp, [16, 84])
+    spct = 0.5 * float(hi - lo)
+    med = [np.median(res[w][0]) for w in windows if len(res[w][0])]
+    sysm = 0.5 * (max(med) - min(med))
+    return dict(zero=float(np.median(smp)), sigma_total=float(np.sqrt(spct ** 2 + sysm ** 2 + wp ** 2 / 12.0)), sigma_pct=spct,
+                sigma_std=float(smp.std()), systematic=float(sysm), pinned_width=wp, n_moved=nm)
+
+
+def wedge_verdict(T1, s1, T2, s2, T1_pred, T2_pred, tol=0.03):
+    """M2-wedge rule (docs/CD_rules.md): 'confirmed' iff T1 < T2 and T2 - T1 > 2 sqrt(s1^2 + s2^2); 'location consistent' iff both within tol of the
+    predictions.  Returns dict(confirmed, location)."""
+    return dict(confirmed=bool(T1 < T2 and (T2 - T1) > 2 * np.hypot(s1, s2)),
+                location=bool(abs(T1 - T1_pred) <= tol and abs(T2 - T2_pred) <= tol))
