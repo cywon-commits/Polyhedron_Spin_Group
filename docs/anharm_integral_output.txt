@@ -1,0 +1,24 @@
+dim2 zG=1.0 k=0: T range 0.02-0.18; delta_e/T^2 at low T ['0.02:+0.80', '0.04:+0.95', '0.06:+1.02']; check |de|/T^2<=3: True
+dim2 zG=1.0 k=1: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+1.07', '0.04:+1.17', '0.06:+1.12']; check |de|/T^2<=3: True
+dim2 zG=1.0 k=2: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+1.15', '0.04:+1.28', '0.06:+1.36']; check |de|/T^2<=3: True
+dim2 zG=1.1 k=0: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+0.89', '0.04:+0.66', '0.06:+0.75']; check |de|/T^2<=3: True
+dim2 zG=1.1 k=1: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+1.11', '0.04:+1.17', '0.06:+1.28']; check |de|/T^2<=3: True
+dim2 zG=1.1 k=2: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+1.13', '0.04:+1.38', '0.06:+1.33']; check |de|/T^2<=3: True
+dim2 [trapezoid, c0 from T=0.02 (primary)]: T1 0.2348, T2 0.2539, b 0.054   (sigma_int T1 0.0007, T2 0.0023, b 0.004; b from zG=1.0 chains 0.053)
+   T1 dim2: predicted 0.2348 +- 0.0007; measured 0.2338 +- 0.0005; |diff| 0.0010 vs 2 sigma 0.0017: reproduced
+   T2 dim2: predicted 0.2539 +- 0.0023; measured 0.2560 +- 0.0019; |diff| 0.0021 vs 2 sigma 0.0060: reproduced
+   b dim2: predicted 0.0543 +- 0.0035; measured 0.1500 +- 0.0500; |diff| 0.0957 vs 2 sigma 0.1003: reproduced
+dim2 [Simpson]: T1 0.2348, T2 0.2539, b 0.055
+dim2 [c0 from T=0.04]: T1 0.2343, T2 0.2528, b 0.054
+dim3 zG=1.0 k=0: T range 0.02-0.22; delta_e/T^2 at low T ['0.02:+0.76', '0.04:+0.83', '0.06:+0.95']; check |de|/T^2<=3: True
+dim3 zG=1.0 k=1: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+1.14', '0.04:+1.23', '0.06:+1.14']; check |de|/T^2<=3: True
+dim3 zG=1.0 k=2: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+1.19', '0.04:+1.24', '0.06:+1.33']; check |de|/T^2<=3: True
+dim3 zG=1.1 k=0: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+0.79', '0.04:+0.78', '0.06:+0.85']; check |de|/T^2<=3: True
+dim3 zG=1.1 k=1: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+1.20', '0.04:+1.23', '0.06:+1.20']; check |de|/T^2<=3: True
+dim3 zG=1.1 k=2: T range 0.02-0.26; delta_e/T^2 at low T ['0.02:+1.31', '0.04:+1.29', '0.06:+1.26']; check |de|/T^2<=3: True
+dim3 [trapezoid, c0 from T=0.02 (primary)]: T1 0.2352, T2 0.2560, b 0.065   (sigma_int T1 0.0005, T2 0.0018, b 0.002; b from zG=1.0 chains 0.050)
+   T1 dim3: predicted 0.2352 +- 0.0005; measured 0.2356 +- 0.0008; |diff| 0.0004 vs 2 sigma 0.0019: reproduced
+   T2 dim3: predicted 0.2560 +- 0.0018; measured 0.2541 +- 0.0064; |diff| 0.0019 vs 2 sigma 0.0133: reproduced
+dim3 [Simpson]: T1 0.2352, T2 0.2560, b 0.066
+dim3 [c0 from T=0.04]: T1 0.2351, T2 0.2563, b 0.065
+VERDICT: all five reproduced -> quantitatively explained
