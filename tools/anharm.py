@@ -27,7 +27,7 @@ def run(a):
     jobs = []
     for zG in (1.0, 1.1):
         for k in (0, 1, 2):
-            for T in TS:
+            for T in (a.T if a.T else TS):
                 jobs.append((a.dim, a.size, zG, k, round(T, 3), a.equil, a.meas, a.seed + len(jobs)))
     with Pool(a.procs) as p:
         res = p.map(job, jobs, chunksize=1)
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest="cmd")
     r = sp.add_parser("run"); r.add_argument("out"); r.add_argument("--dim", type=int, default=2); r.add_argument("--size", type=int, default=16)
     r.add_argument("--equil", type=int, default=5000); r.add_argument("--meas", type=int, default=20000)
-    r.add_argument("--seed", type=int, default=41000); r.add_argument("--procs", type=int, default=4)
+    r.add_argument("--seed", type=int, default=41000); r.add_argument("--T", nargs="+", type=float, default=None); r.add_argument("--procs", type=int, default=4)
     sp.add_parser("analyze")
     a = ap.parse_args()
     if a.cmd == "run":
