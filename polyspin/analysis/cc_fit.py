@@ -129,3 +129,50 @@ def wedge_verdict(T1, s1, T2, s2, T1_pred, T2_pred, tol=0.03):
     predictions.  Returns dict(confirmed, location)."""
     return dict(confirmed=bool(T1 < T2 and (T2 - T1) > 2 * np.hypot(s1, s2)),
                 location=bool(abs(T1 - T1_pred) <= tol and abs(T2 - T2_pred) <= tol))
+
+
+SM_WIDTHS = (0.2, 0.3, 0.4, 0.5, 0.75, 1.0)
+
+
+def crossing_seedmean(Ts, vs, nboot=4000, seed=0, widths=SM_WIDTHS):
+    """Seed-mean estimator (decision Oct 17 (a); rule in docs/CD_rules.md), for scans with several seeds per temperature.
+    1. Average v over the seeds at each T (the seed mean is the unit of the curve).
+    2. Window from the full-data seed-mean curve: the smallest w in ``widths`` such that the temperatures with |mean| <= w max|mean| are at
+       least 4 distinct values and include both signs; the window is widened until it does.  NEVER falls back to a first-sign-change interpolation.
+    3. Bootstrap = resample the seeds within each T, take means, one linear fit over the window temperatures, zero = -c/k.
+    4. sigma_pct = half of the 16-84% range (primary), sigma_std reported; systematic = half the range of the full-data zeros at the chosen and the
+       next two widths; sigma_total^2 = sigma_pct^2 + systematic^2.
+    Returns dict(zero, sigma_total, sigma_pct, sigma_std, systematic, width, n_window)."""
+    Ts, vs = np.asarray(Ts, float), np.asarray(vs, float)
+    keys = np.unique(np.round(Ts, 6))
+    groups = [vs[np.isclose(Ts, k)] for k in keys]
+    means = np.array([g.mean() for g in groups])
+    amax = np.abs(means).max()
+
+    def window(w):
+        return np.where(np.abs(means) <= w * amax)[0]
+
+    def ok(ix):
+        return len(ix) >= 4 and (means[ix] > 0).any() and (means[ix] < 0).any()
+
+    chosen = None
+    for j, w in enumerate(widths):
+        if ok(window(w)):
+            chosen = j; break
+    if chosen is None:
+        return dict(zero=float("nan"), sigma_total=float("nan"), sigma_pct=float("nan"), sigma_std=float("nan"), systematic=float("nan"), width=float("nan"), n_window=0)
+
+    def zero_of(m, ix):
+        k, c = np.polyfit(keys[ix], m[ix], 1)
+        return -c / k
+
+    ix = window(widths[chosen])
+    rng = np.random.default_rng(seed)
+    z = np.array([zero_of(np.array([rng.choice(g, len(g)).mean() for g in groups]), ix) for _ in range(nboot)])
+    z = z[np.isfinite(z)]
+    lo, med, hi = np.percentile(z, [16, 50, 84])
+    spct = 0.5 * float(hi - lo)
+    full = [zero_of(means, window(widths[j])) for j in range(chosen, min(chosen + 3, len(widths))) if ok(window(widths[j]))]
+    syst = 0.5 * (max(full) - min(full))
+    return dict(zero=float(zero_of(means, ix)), sigma_total=float(np.hypot(spct, syst)), sigma_pct=spct, sigma_std=float(z.std()), systematic=float(syst),
+                width=float(widths[chosen]), n_window=int(len(ix)))

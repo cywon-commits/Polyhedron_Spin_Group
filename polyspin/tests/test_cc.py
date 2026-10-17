@@ -101,3 +101,24 @@ def test_crossing_robust_percentile_error_and_wedge_rule():
     assert not wedge_verdict(0.2324, 0.01, 0.2500, 0.01, 0.243, 0.265)["confirmed"]      # difference below 2 sigma
     assert not wedge_verdict(0.26, 0.001, 0.25, 0.001, 0.243, 0.265)["confirmed"]        # T1 >= T2: no wedge
     assert not wedge_verdict(0.2324, 0.002, 0.2500, 0.004, 0.30, 0.265)["location"]      # T1 prediction off by more than 0.03
+
+
+def test_crossing_seedmean_no_grid_snapping_and_widening():
+    from polyspin.analysis.cc_fit import crossing_seedmean
+    rng = np.random.default_rng(5)
+    Ts = np.round(np.arange(0.226, 0.2461, 0.002), 3)
+    true = 0.2365
+    vs, tt = [], []
+    for T in Ts:
+        for _ in range(6):
+            tt.append(T); vs.append(-0.05 * (T - true) + rng.normal(0, 2e-4))   # ~1e-4 scale slope with a noisy seed spread
+    tt[4] = Ts[0]                                                               # keep the grid regular but make one seed wild below the zero
+    vs[4] = -3e-4
+    r = crossing_seedmean(tt, vs, nboot=800)
+    assert abs(r["zero"] - true) < 0.003 and abs(r["zero"] - 0.230) > 0.003      # not snapped to a grid point
+    assert r["sigma_pct"] > 0 and r["n_window"] >= 4
+    # a window with too few points must widen: sparse near the zero (only two temperatures within 0.2 max|v|)
+    T2 = np.repeat(np.array([0.20, 0.22, 0.235, 0.238, 0.26, 0.28]), 4)
+    v2 = -0.03 * (T2 - 0.2365) + rng.normal(0, 1e-4, len(T2))
+    r2 = crossing_seedmean(T2, v2, nboot=500)
+    assert r2["width"] > 0.2 and abs(r2["zero"] - 0.2365) < 0.01
