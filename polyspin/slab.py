@@ -32,8 +32,18 @@ def moment_fractions(spins, lo=0.25, hi=0.75):
     return np.array([(M < lo).mean(), ((M >= lo) & (M < hi)).mean(), (M >= hi).mean()])
 
 
+def moment_class_fractions(spins):
+    """Fractions of clusters by net moment for any n: index j = 0..n//2 is the class with |M| = n - 2 (n//2 - j) ... i.e. ascending |M|
+    (j = 0: M = 0 (C), last: M = n (F)); a cluster is assigned to the class with the nearest |M|/n."""
+    n = spins.shape[1]
+    M = np.linalg.norm(spins.sum(1), axis=1)
+    levels = np.array([n - 2 * k for k in range(n // 2, -1, -1)], float)          # ascending: 0, 2, 4, ...
+    cls = np.abs(M[:, None] - levels[None, :]).argmin(1)
+    return np.bincount(cls, minlength=len(levels)) / len(M)
+
+
 def run_slab(lattice, params: Params, T, S_C, S_F, n_sweeps, record_every=50, seed=0, kappa=20.0,
-             n_tune=4000, kind="axis"):
+             n_tune=4000, kind="axis", frac_fn=None):
     """Single-temperature MC of a slab configuration; returns (sweeps, fractions (k,3), energies (k,))."""
     spins = make_slab(lattice, S_C, S_F, kind=kind)
     p, nbr, beta = params.array(), lattice.nbr, 1.0 / T
@@ -45,7 +55,7 @@ def run_slab(lattice, params: Params, T, S_C, S_F, n_sweeps, record_every=50, se
         for _ in range(record_every):
             moves.mc_sweep(spins, nbr, p, beta, d, dr, kappa, True, True, True, False, s, c)
         ts.append(sw + record_every)
-        fr.append(moment_fractions(spins))
+        fr.append((frac_fn or moment_fractions)(spins))
         es.append(energy_total(spins, nbr, p) / lattice.N)
     return np.array(ts), np.array(fr), np.array(es), spins
 
