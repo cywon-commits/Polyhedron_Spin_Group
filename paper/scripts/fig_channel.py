@@ -1,6 +1,6 @@
 """Channel selection (fig. 6): T1, T2 per size and dimension from paper/data/e2_T1T2.json, cut D T2 and cut E (preliminary) from the derived tables."""
 from style import *; import numpy as np, json
-D = json.load(open('../data/e2_T1T2.json')); CD = json.load(open('../data/cutD_T2.json')); CE = json.load(open('../data/cutE_prelim.json'))['rows']
+D = json.load(open('../data/e2_T1T2.json')); CD = json.load(open('../data/cutD_T2.json')); CE = json.load(open('../data/cutE.json'))
 fig, axs = plt.subplots(1, 2, figsize=(DCOL, 2.8))
 ax = axs[0]; zc = (1 + 0.5 + 1.0) / 3
 style = {(2, 16): ('o', 'none', -0.006), (2, 24): ('o', None, -0.002), (3, 8): ('s', 'none', 0.002), (3, 10): ('s', None, 0.006), (3, 12): ('D', None, 0.010)}
@@ -23,15 +23,16 @@ ax.legend(loc='upper left', ncol=2, fontsize=7.2, columnspacing=0.8, handletextp
 ax.set_xlim(0.82, 1.05); ax.set_ylim(0, 0.42); ax.set_xlabel(r'$zG$'); ax.set_ylabel(r'$T$')
 ax.set_title(r"(a) cut E$^\prime$ ($K=-0.25$, $zH_4=0.25$)", loc='left', fontsize=9.5)
 ax = axs[1]; zc = (1 + 1.0) / 3
-e = [r for r in CE if r['zG'] in (0.8, 1.0)]
-ax.plot([r['zG'] for r in e], [r['T_chi1_peak'] for r in e], 's', color=C['D'], ms=6, mfc='white', label=r'cut E: $T_1$ of D order (prelim., 2D $L=8$)')
-g = np.linspace(zc, 1.05, 100); n1 = [r['T_chi1_peak'] for r in e if r['zG'] == 1.0][0]
-ax.plot(g, n1 * g * (g - zc) / (1.0 * (1.0 - zc)), '--', color=C['D'], label=r'$\propto G\,M^2$')
+for L, mk, fc in ((8, 's', 'white'), (10, 's', C['D'])):
+    zs = [0.8, 1.0]; t = [CE['D']['T1'][f'L{L}_zG{z}_ord'] for z in ('0.8', '1')]
+    ax.errorbar(zs, [q[0] for q in t], yerr=[q[1] for q in t], fmt=mk, color=C['D'], ms=6, mfc=fc, capsize=1.5, elinewidth=0.8, label=f'cut E: $T_1$ of D order, 3D $L={L}$')
+n1 = CE['D']['T1']['L10_zG1_ord'][0]; g = np.linspace(zc, 1.05, 100)
+ax.plot(g, n1 * g * (g - zc) / (1.0 * (1.0 - zc)), '--', color=C['D'], label=r'$\propto G\,M^2$ (norm. at $zG=1$)')
 for kind, mk, fc in (('heat', '^', C['C']), ('cool', 'v', C['C']), ('trial', 'o', 'white')):
     rr = [r for r in CD if r['kind'] == kind]
     ax.plot([r['zG'] for r in rr], [r['T2'] for r in rr], mk, color=C['C'], ms=6, mfc=fc,
             label={'heat': r'cut D: $T_2$, heating, 2D $L=16$', 'cool': r'cut D: $T_2$, cooling, 2D $L=16$', 'trial': r'cut D: $T_2$, 2D $L=8$ trial'}[kind])
-ax.text(0.665, 0.17, 'cut E: C bodies decouple\n(odd channels only;\n$A_{\\rm odd}=0$ in C)', fontsize=8, color='0.25', va='bottom')
+ax.text(0.665, 0.19, 'cut E, $zG=0.5$ (C): no order,\n$m_2\\sqrt{N}$ and $c_{\\max}$ independent of $L$\n(bodies decouple)', fontsize=7.6, color='0.25', va='bottom')
 ax.set_xlim(0.65, 1.15); ax.set_ylim(0, 1.3); ax.set_xlabel(r'$zG$'); ax.set_ylabel(r'$T$')
 ax.set_title(r'(b) cuts E ($zH_4=0$) and D ($zH_4=1.5$)', loc='left', fontsize=9.5)
 ax.legend(loc='upper left', bbox_to_anchor=(0.0, 1.02), fontsize=7.2, handletextpad=0.3)

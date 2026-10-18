@@ -49,6 +49,8 @@ if "cutD" in todo:
 
 # ---------------------------------------------------------------- cut E (preliminary M3 trials, 2D L = 8, ordered start; raw files are in the session scratch, not in the repository)
 if "cutE" in todo:
+    import subprocess; subprocess.run([sys.executable, str(ROOT / "tools/fit_e3d.py"), "--json", str(OUT / "cutE.json")], check=True, stdout=subprocess.DEVNULL)  # production 3D L = 8, 10 (docs/CD_rules.md); the preliminary 2D L = 8 values stay in cutE_prelim.json
+    if False:
     rows = []
     for zg in ("0.5", "0.8", "1", "1.2"):
         p = Path(SCRATCH) / f"E_2d_L8_zG{zg}_prelimord.h5"

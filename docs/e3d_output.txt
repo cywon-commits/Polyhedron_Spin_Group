@@ -1,0 +1,25 @@
+## C point, zG = 0.5: collective order?
+L=8 ord: T_low 0.020  m2 0.0416  m2*sqrt(N) 0.942  c_max 4.84 at T=0.247
+L=8 ran: T_low 0.020  m2 0.0415  m2*sqrt(N) 0.939  c_max 4.95 at T=0.286
+L=10 ord: T_low 0.020  m2 0.0296  m2*sqrt(N) 0.937  c_max 4.77 at T=0.286
+L=10 ran: T_low 0.020  m2 0.0297  m2*sqrt(N) 0.940  c_max 4.86 at T=0.286
+ordered start: m2*sqrt(N) ratio L10/L8 = 0.995 (within +-20%: True); c_max ratio = 0.986 (<= 1.2: True)
+VERDICT C point: no collective order (coupling 0 confirmed)
+
+## D points: T1 (chi_1 peak, ordered start, jackknife)
+L=8 zG=0.8 ord: T1 = 0.0252 +- 0.0011   m1(low T) 0.232
+L=8 zG=0.8 ran: T1 = 0.1200 +- 0.0442   m1(low T) 0.001
+L=8 zG=1 ord: T1 = 0.0974 +- 0.0029   m1(low T) 0.333
+L=8 zG=1 ran: T1 = 0.3000 +- 0.0083   m1(low T) 0.002
+L=10 zG=0.8 ord: T1 = 0.0254 +- 0.0011   m1(low T) 0.233
+L=10 zG=0.8 ran: T1 = 0.0823 +- 0.0292   m1(low T) 0.001
+L=10 zG=1 ord: T1 = 0.0977 +- 0.0029   m1(low T) 0.333
+L=10 zG=1 ran: T1 = 0.3000 +- 0.0083   m1(low T) 0.001
+T1(0.8)/T1(1.0), L=8: 0.259 +- 0.013  (predicted 0.32, no threshold)
+T1(0.8)/T1(1.0), L=10: 0.260 +- 0.013  (predicted 0.32, no threshold)
+
+## F point, zG = 1.2 (no rule)
+L=8 ord: chi1 peak 0.2383 +- 0.0038; c max 10.6 at 0.239; m1 low T 0.992
+L=8 ran: chi1 peak 0.3500 +- 0.0054; c max 4.8 at 0.281; m1 low T 0.004
+L=10 ord: chi1 peak 0.2382 +- 0.0038; c max 10.2 at 0.239; m1 low T 0.992
+L=10 ran: chi1 peak 0.3500 +- 0.0054; c max 5.0 at 0.297; m1 low T 0.003
