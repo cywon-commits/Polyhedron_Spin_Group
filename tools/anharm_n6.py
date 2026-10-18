@@ -42,23 +42,24 @@ def integrate(measured=None):
         df = anh.DF([r for r in res if r["k"] == k], N); df.ah = 6.0 - 1.0 / N; dfs[k] = df
         de = df.delta_e(); print(f"k={k}: T range {df.T[0]:.2f}-{df.T[-1]:.2f}; delta_e/T^2 at low T {[round(float(q), 2) for q in de[:3] / df.T[:3] ** 2]}")
     def roots(sp):
-        lim = min(s.x[-1] for s in sp.values())
         g = {"Ta": lambda T: 10 * x / T + d[1] + (sp[1](T) - sp[0](T)) / T, "Tb": lambda T: 6 * x / T + (d[2] - d[1]) + (sp[2](T) - sp[1](T)) / T,
              "Tc": lambda T: 2 * x / T + (d[3] - d[2]) + (sp[3](T) - sp[2](T)) / T}
         out = {}
+        need = {"Ta": (0, 1), "Tb": (1, 2), "Tc": (2, 3)}      # only the branches entering a boundary limit its evaluability
         for q, f in g.items():
+            lim = min(sp[k].x[-1] for k in need[q])
             try: out[q] = brentq(f, 0.2, lim)
             except ValueError: out[q] = float("nan")
         return out
     nom = roots({k: dfs[k].table()[0] for k in dfs})
     rng = np.random.default_rng(0); smp = [roots({k: dfs[k].sample(rng) for k in dfs}) for _ in range(2000)]
-    sg = {q: float(np.nanstd([s[q] for s in smp])) for q in nom}
+    sg = {q: float(np.nanstd([s[q] for s in smp])) for q in nom}; sw = float(np.nanstd([s['Tc'] - s['Tb'] for s in smp]))
     harm = {"Ta": 0.1 / ((d[1] - 0) / -10) if False else -10 * x / d[1], "Tb": -6 * x / (d[2] - d[1]), "Tc": -2 * x / (d[3] - d[2])}
     out = dict(nominal=nom, sigma_int=sg, harmonic=harm, T_limit={k: float(dfs[k].T[-1]) for k in dfs})
     print("harmonic:", {q: round(v, 4) for q, v in harm.items()}); print("TI corrected:", {q: f"{nom[q]:.4f} +- {sg[q]:.4f}" for q in nom})
     shifts = {q: nom[q] - harm[q] for q in nom}; print("shifts:", {q: round(v, 4) for q, v in shifts.items()}, " width M2 (Tc-Tb): corrected", round(nom['Tc'] - nom['Tb'], 4), "harmonic", round(harm['Tc'] - harm['Tb'], 4))
     trend = all(v < 0 for v in shifts.values()) and abs(shifts["Ta"]) < abs(shifts["Tb"]) < abs(shifts["Tc"])
-    print("trend (all shifts < 0 and |shift| increasing a<b<c):", trend)
+    print(f"width sigma (propagated) {sw:.4f}"); print("trend (all shifts < 0 and |shift| increasing a<b<c):", trend)
     meas = measured or {"Ta": (0.3205, 0.0011), "Tb": (0.3544, 0.0021), "Tc": (0.3641, 0.0045)}
     for q in nom:
         mv, me = meas[q]; tol = 2 * np.hypot(me, sg[q]); print(f"  {q}: predicted {nom[q]:.4f} +- {sg[q]:.4f}; measured {mv:.4f} +- {me:.4f}; |diff| {abs(nom[q] - mv):.4f} vs 2 sigma {tol:.4f}: {'reproduced' if abs(nom[q] - mv) <= tol else 'NOT reproduced'}")

@@ -1,0 +1,12 @@
+k=0: T range 0.02-0.36; delta_e/T^2 at low T [0.87, 0.89, 0.86]
+k=1: T range 0.02-0.40; delta_e/T^2 at low T [0.78, 1.28, 1.29]
+k=2: T range 0.02-0.40; delta_e/T^2 at low T [1.31, 1.27, 1.36]
+k=3: T range 0.02-0.40; delta_e/T^2 at low T [1.51, 1.32, 1.15]
+harmonic: {'Ta': 0.33, 'Tb': 0.3674, 'Tc': 0.3832}
+TI corrected: {'Ta': '0.3204 +- 0.0011', 'Tb': '0.3521 +- 0.0022', 'Tc': '0.3705 +- 0.0067'}
+shifts: {'Ta': -0.0096, 'Tb': -0.0154, 'Tc': -0.0126}  width M2 (Tc-Tb): corrected 0.0184 harmonic 0.0157
+width sigma (propagated) 0.0080
+trend (all shifts < 0 and |shift| increasing a<b<c): False
+  Ta: predicted 0.3204 +- 0.0011; measured 0.3205 +- 0.0011; |diff| 0.0001 vs 2 sigma 0.0032: reproduced
+  Tb: predicted 0.3521 +- 0.0022; measured 0.3544 +- 0.0021; |diff| 0.0023 vs 2 sigma 0.0061: reproduced
+  Tc: predicted 0.3705 +- 0.0067; measured 0.3641 +- 0.0045; |diff| 0.0064 vs 2 sigma 0.0161: reproduced
