@@ -80,11 +80,14 @@ if "wedge" in todo:
     W = dict(
         d2=dict(T1=est("slab_M2F_zG1.1"), T2=est("slab_CM2_zG1.1")),
         d3=dict(T1=est("slab_M2F_3D_L12_supp"), T2=est("slab_CM2_3D_L12_remeasure"), T1_orig=est("slab_M2F_3D_L12"), T2_orig=est("slab_CM2_3D_L12")),
-        n6=dict(Ta=est("slab_n6_M4F_zG1.1"), Tb=est("slab_n6_M2M4_zG1.1"), Tc=est("slab_n6_CM2_zG1.1"), Tc_supp=est("slab_n6_CM2_zG1.1_supp"), Tc_pooled=est("slab_n6_CM2_zG1.1", "slab_n6_CM2_zG1.1_supp")),
+        n6=dict(Ta=est("slab_n6_M4F_zG1.1"), Tb=est("slab_n6_M2M4_zG1.1"), Tc=est("slab_n6_CM2_zG1.1"), Tc_supp=est("slab_n6_CM2_zG1.1_supp"), Tc_pooled=est("slab_n6_CM2_zG1.1", "slab_n6_CM2_zG1.1_supp"), Tc_x3=est("slab_n6_CM2_zG1.1_x3")),
         harmonic=dict(d2=dict(T1=0.2431, T2=0.2646), d3=dict(T1=0.2440, T2=0.2665), n6=dict(Ta=0.3300, Tb=0.3674, Tc=0.3832)))
     spec = importlib.util.spec_from_file_location("anh", ROOT / "tools/anharm.py"); anh = importlib.util.module_from_spec(spec); spec.loader.exec_module(anh)
     with contextlib.redirect_stdout(io.StringIO()): anh.integrate()
     W["TI"] = {f"{q}_{dim}d": v for (q, dim), v in anh.integrate.results.items()}
+    spec6 = importlib.util.spec_from_file_location("an6", ROOT / "tools/anharm_n6.py"); an6 = importlib.util.module_from_spec(spec6); spec6.loader.exec_module(an6)
+    with contextlib.redirect_stdout(io.StringIO()): o6 = an6.integrate()
+    W["TI_n6"] = dict(nominal=o6["nominal"], sigma=o6["sigma_int"], harmonic=o6["harmonic"])
     W["B3D"] = dict(L12=est("slab_B3D_zH41_L12_v2"), L16=est("slab_B3D_zH41_L16"), latent_heat=dict(value=2.05, err=0.03, note="L = 8, 10 window chains, docs/M4_stage2_followup_report.md"))
     dump("wedge", W); print("wedge:", json.dumps(W, indent=0)[:1500])
 

@@ -30,7 +30,8 @@ for q in ('T1', 'T2'): axs[0].plot([x / ti[f'{q}_2d']['pred']], [yt - 0.2], 'x',
 yt6 = 0.95
 meas(axs[1], [(W['n6']['Ta']['zero'], W['n6']['Ta']['sigma']), (W['n6']['Tb']['zero'], W['n6']['Tb']['sigma'])], yt6, 'o', 'white', '')
 meas(axs[1], [(W['n6']['Tc']['zero'], W['n6']['Tc']['sigma'])], yt6, 'o', 'white', '')
-axs[1].plot([], [], 'o', color='k', mfc='white', ms=5, label='slab measurement'); axs[0].plot([], [], 'o', color='k', mfc='white', ms=5, label='slab'); axs[0].plot([], [], 'x', color='k', ms=5, mew=1.3, label='TI-corrected')
+for q in ('Ta', 'Tb', 'Tc'): axs[1].plot([x / W['TI_n6']['nominal'][q]], [yt6 - 0.3], 'x', color='k', ms=5, mew=1.3)
+axs[1].plot([], [], 'o', color='k', mfc='white', ms=5, label='slab'); axs[1].plot([], [], 'x', color='k', ms=5, mew=1.3, label='TI-corrected'); axs[0].plot([], [], 'o', color='k', mfc='white', ms=5, label='slab'); axs[0].plot([], [], 'x', color='k', ms=5, mew=1.3, label='TI-corrected')
 for ax in axs:
     ax.set_ylabel(r'$\Delta F_k/T$'); ax.set_xlabel(r'$u=(zG-J)/T$   (low $T$ $\rightarrow$)')
 axs[0].set_title(r'(a) $n=4$ (2D, $zG=1.1$)', loc='left', fontsize=9.5); axs[1].set_title(r'(b) $n=6$ (2D, $zG=1.1$)', loc='left', fontsize=9.5)
