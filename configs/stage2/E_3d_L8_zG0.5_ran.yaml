@@ -1,0 +1,20 @@
+name: E_3d_L8_zG0.5_ran
+cut: E
+t0_prediction: C
+lattice: {dim: 3, size: 8}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 0.5, zH4: 0.0, K: -0.5}
+temperatures:
+  list: [0.02, 0.02319, 0.02688, 0.03117, 0.03613, 0.04189, 0.04857, 0.05631, 0.06528,
+    0.07569, 0.08775, 0.10174, 0.11795, 0.13675, 0.15854, 0.18381, 0.2131, 0.24707,
+    0.28644, 0.33209, 0.38502, 0.44638, 0.51752, 0.6]
+sampling: {n_equil: 20000, n_meas: 20000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 250,
+  tune_every: 200, checkpoint_minutes: 20}
+init: random
+seed: 8001
+exchange: true
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2

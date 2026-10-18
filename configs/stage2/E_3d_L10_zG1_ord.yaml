@@ -1,0 +1,21 @@
+name: E_3d_L10_zG1_ord
+cut: E
+t0_prediction: D
+lattice: {dim: 3, size: 10}
+model: {J: 1.0, L: 0.0, G1: 0.0, zG: 1.0, zH4: 0.0, K: -0.5}
+temperatures:
+  list: [0.02, 0.02211, 0.02444, 0.02702, 0.02987, 0.03302, 0.03651, 0.04036, 0.04462,
+    0.04932, 0.05453, 0.06028, 0.06664, 0.07367, 0.08144, 0.09004, 0.09953, 0.11004,
+    0.12164, 0.13448, 0.14866, 0.16435, 0.18169, 0.20086, 0.22205, 0.24547, 0.27137,
+    0.3]
+sampling: {n_equil: 20000, n_meas: 20000, sweeps_per_exchange: 1, meas_every: 5, diag_every: 250,
+  tune_every: 200, checkpoint_minutes: 20}
+init: ordered
+seed: 8001
+exchange: true
+diagnostics:
+  corr_blocks: 10
+  defects:
+    stride: 3
+    coarse_blocks: [2, 4]
+stage: 2

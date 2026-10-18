@@ -81,7 +81,7 @@ def cubic_energy_per_cluster(spins, nbr, params: Params):
     return energy_total(spins, nbr, p3) / len(spins)
 
 
-def run_branch(lattice, params: Params, T, S0, n_equil, n_meas, seed=0, kappa=20.0, record_every=20, n_blocks=10):
+def run_branch(lattice, params: Params, T, S0, n_equil, n_meas, seed=0, kappa=20.0, record_every=20, n_blocks=10, frac_fn=None):
     """Single-temperature chain started in the ordered state S0 (one branch, no exchange): returns dict with <E>/N and
     <dH/dzG>/N = <E3>/(N zG) with block errors, and the moment-class fractions (C, M2, F) averaged over the run (a
     branch that stays in its class has fraction ~1 in its own class)."""
@@ -99,7 +99,7 @@ def run_branch(lattice, params: Params, T, S0, n_equil, n_meas, seed=0, kappa=20
             moves.mc_sweep(spins, nbr, p, beta, d, dr, kappa, True, True, True, False, s, c)
         E.append(energy_total(spins, nbr, p) / lattice.N)
         E3.append(cubic_energy_per_cluster(spins, nbr, params))
-        fr.append(moment_fractions(spins))
+        fr.append((frac_fn or moment_fractions)(spins))
     E, E3, fr = np.array(E), np.array(E3), np.array(fr)
     dH = E3 / params.zG
     def blk(x):
