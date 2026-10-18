@@ -1,0 +1,16 @@
+from style import *; import numpy as np
+fig,axs=plt.subplots(1,2,figsize=(DCOL,2.5),gridspec_kw={'width_ratios':[1.2,1]})
+ax=axs[0]; phi=np.linspace(0,60,300); c=np.cos(np.radians(3*phi))
+ax.plot(phi,10/3*(1+c),color='#4C72B0',label=r'$A_3$ (octupole)')
+ax.plot(phi,119/9-70/9*c,color='#C44E52',label=r'$A_4$ (hexadecapole)')
+ax.set_xlabel(r'twist angle $\varphi$ (deg)'); ax.set_ylabel(r'$A_l=\sum_{ij}P_l(\mathbf{S}_i\cdot\mathbf{S}_j)$')
+ax.text(1.5,8.3,'prism P ($D_{3h}$)',fontsize=8.5); ax.text(59,2.0,'octahedron O ($O_h$)',fontsize=8.5,ha='right')
+ax.set_xlim(0,60); ax.set_ylim(0,23); ax.legend(loc='upper left',fontsize=8.5)
+ax.set_title(r'(a) $n=6$ two-design family',loc='left',fontsize=9.5)
+ax=axs[1]
+g=np.linspace(0,1.0,10)
+ax.plot(g,0.75*g,'k-'); ax.text(0.5,0.2,r'line $zH_4=\frac{3}{4} zG$:'+'\nwhole family degenerate',fontsize=8.5)
+ax.text(0.12,0.62,'O selected',fontsize=9,color='#C44E52'); ax.text(0.75,0.06,'P selected',fontsize=9,color='#4C72B0')
+ax.set_xlim(0,1); ax.set_ylim(0,0.8); ax.set_xlabel(r'$zG$'); ax.set_ylabel(r'$zH_4$')
+ax.set_title(r'(b) selection within the family',loc='left',fontsize=9.5)
+fig.tight_layout(w_pad=1.5); fig.savefig('fig/fig_n6.pdf')

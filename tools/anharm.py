@@ -101,7 +101,7 @@ def integrate():
     lq = {2: 96, 3: 24}; z = {2: 4, 3: 6}
     meas = {("T1", 2): (0.2338, 0.0005), ("T2", 2): (0.2560, 0.0019), ("T1", 3): (0.2356, 0.0008), ("T2", 3): (0.2541, 0.0064), ("b", 2): (0.15, 0.05)}
     bT = np.array([0.10, 0.12, 0.14, 0.16, 0.18])
-    verdicts = []
+    verdicts = []; results = {}
     for dim, size in ((2, 16), (3, 8)):
         res = load_chains(dim, size); N = size ** dim
         if not any(r["T"] == 0.02 for r in res):
@@ -128,9 +128,10 @@ def integrate():
                 for q in ("T1", "T2", "b"):
                     if (q, dim) not in meas: continue
                     mv, me = meas[(q, dim)]; tol = 2 * np.hypot(me, sg[q]); ok = abs(nom[q] - mv) <= tol
-                    verdicts.append(ok)
+                    verdicts.append(ok); results[(q, dim)] = dict(pred=float(nom[q]), sigma_int=float(sg[q]), meas=mv, sigma_meas=me)
                     print(f"   {q} dim{dim}: predicted {nom[q]:.4f} +- {sg[q]:.4f}; measured {mv:.4f} +- {me:.4f}; |diff| {abs(nom[q] - mv):.4f} vs 2 sigma {tol:.4f}: {'reproduced' if ok else 'NOT reproduced'}")
     if len(verdicts) == 5:
+        integrate.results = results
         print("VERDICT:", "all five reproduced -> quantitatively explained" if all(verdicts) else f"{sum(verdicts)} of 5 reproduced")
     else:
         print("VERDICT incomplete:", len(verdicts), "items")
