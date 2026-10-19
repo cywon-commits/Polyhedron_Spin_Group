@@ -43,4 +43,7 @@
 - **논의 절**: "For atomic spins the polyhedral picture requires large $S$ ... that we leave for future work" 세 문장을 삭제했다(양자 4스핀 정확대각화는 이 저장소에 코드와 결과가 없어 논문에서 뺀다).
 - **컷 E**: 결과 절 A에 "D and F points with random starts did not order within the run length ...; as for the U phase, ordered starts are used"를 추가했다. 데이터상 정확한 서술을 위해 "five of the six $\chi_1$ peaks sit at the ladder edge"로 썼다(L = 10, zG = 0.8 무작위 시작의 χ₁ 피크는 0.082 ± 0.029로 가장자리(0.12)가 아니다; m₁ ≈ 0.001로 질서는 없음). U 상 문단에도 "from ordered starts"를 넣었다.
 - **그림 8(a)**: 눈금 글씨를 9 pt로 키웠다. 크기 쌍은 세로로 돌려 첫 줄에, zG(또는 zH₄) 값은 9 pt 둘째 줄에 둔다.
-- 병합/분할 검사 근거를 위에 기록했다. 남은 미확인: 참고문헌의 서지 정보.
+- 병합/분할 검사 근거를 위에 기록했다. 참고문헌 서지 확인은 `paper/BIB_CHECK.md`(§9).
+
+## 9. 참고문헌 서지 확인 (Oct 19)
+26개 항목을 웹 검색으로 대조했다(`paper/BIB_CHECK.md`). 오류 1건: Liu2017의 저자 목록이 틀렸다(실제 Ke Liu, Jonas Greitemann, Lode Pollet, Phys. Rev. E 97, 012706 (2018))→ 고침. 22건 확인, 3건(James–Keenan 1959, Villain et al. 1980, Espinosa et al. 2013의 논문 번호)은 이 세션에서 직접 확인하지 못했다(Crossref/arXiv 접속 차단).
