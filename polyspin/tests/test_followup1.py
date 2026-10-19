@@ -159,3 +159,51 @@ def test_global_classification():
     for S, exp in [(tetrahedron(), "T"), (np.array([up, up, -up, -up]), "C"), (np.array([up] * 4), "F"),
                    (phase_of_gs(Params.from_z(0.9, 0.0, K=-0.5))[2], "M")]:
         assert global_class(m_l(np.tile(S, (lat.N, 1, 1))), 0.05) == exp
+
+
+# ------------------------------------- D-F boundary equation (kappa4 = 0): three channel-space points and the physical point
+from scipy.optimize import minimize_scalar  # noqa: E402
+from polyspin.groundstate import classify_cluster, find_ground_state_kappa  # noqa: E402
+from polyspin.model import legendre  # noqa: E402
+
+
+def _kappa1_on_DF(k2, k3):
+    """kappa1 on the D-F boundary: k1 + 3/4 k2 + 3/8 k3 - 9 k2^2 / (40 k3) = 0 (kappa4 = 0)."""
+    return -0.75 * k2 - 0.375 * k3 + 9 * k2 ** 2 / (40 * k3)
+
+
+def _E_F_minus_E_D(k):
+    """E_F - min_c E_D(c) per body (constant dropped, the same for all states); D = two dimers with d1.d2 = c:
+    E_D(c) = 4 sum_l k_l + 4 sum_l k_l P_l(c), E_F = 8 sum_l k_l.  Returns (difference, optimal c)."""
+    def ED(c):
+        return 4 * sum(k) + 4 * sum(k[l - 1] * legendre(l, np.array(c)) for l in (1, 2, 3, 4))
+    r = minimize_scalar(ED, bounds=(-1, 1), method="bounded", options=dict(xatol=1e-12))
+    return 8 * sum(k) - ED(r.x), float(r.x)
+
+
+@pytest.mark.parametrize("k2, k1_expected, c_expected", [(-0.5, 0.694, -0.65), (-1.0, 0.900, -0.80), (-1.5, 0.994, -0.95)])
+def test_D_F_boundary_channel_points(k2, k1_expected, c_expected):
+    """Channel space with kappa3 = -1, kappa4 = 0 (Fig. T0a): kappa1* = 0.694, 0.900, 0.994 for kappa2 = -0.5, -1, -1.5.
+    On the boundary the D state (dimers at c = d1.d2) and F have the same energy; below kappa1* F is the ground state, above it D
+    with a net moment M > 0 that jumps from the F value (first order)."""
+    k3 = -1.0
+    k1 = _kappa1_on_DF(k2, k3)
+    assert k1 == pytest.approx(k1_expected, abs=5e-4)
+    dE, c = _E_F_minus_E_D([k1, k2, k3, 0.0])
+    assert dE == pytest.approx(0.0, abs=1e-10) and c == pytest.approx(c_expected, abs=1e-6)
+    for dk, phase in ((-0.01, "F"), (+0.01, "D")):
+        E, S = find_ground_state_kappa([k1 + dk, k2, k3, 0.0], 0.0, n=4, n_random=12, seed=0)
+        assert classify_cluster(S, thr=0.999, m_tol=1e-3) == phase
+        M = np.linalg.norm(S.sum(0)) / 4
+        assert (M > 0.99) if phase == "F" else (0.1 < M < 0.6)
+
+
+def test_D_F_boundary_physical_point():
+    """Physical parameters J = 1, K = -0.5, zH4 = 0: Eq. (DF) gives zG = (1 + sqrt(4/3))/2 = 1.0774 (kappa4 = 0)."""
+    g = (1 + np.sqrt(4 / 3)) / 2
+    assert g == pytest.approx(1.077, abs=5e-4) and boundary_DF(1.0, -0.5) == pytest.approx(g, abs=1e-12)
+    k = channel_coeffs(Params.from_z(g, 0.0, K=-0.5))[0]
+    assert k[0] + 0.75 * k[1] + 0.375 * k[2] - 9 * k[1] ** 2 / (40 * k[2]) == pytest.approx(0.0, abs=1e-12)
+    dE, _ = _E_F_minus_E_D(list(k))
+    assert dE == pytest.approx(0.0, abs=1e-10)
+    assert phase_of_gs(Params.from_z(g - 0.01, 0.0, K=-0.5))[0] == "D" and phase_of_gs(Params.from_z(g + 0.01, 0.0, K=-0.5))[0] == "F"
