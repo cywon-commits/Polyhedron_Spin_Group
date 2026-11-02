@@ -24,19 +24,19 @@ def table(ax,g,title):
             for k,(c,p) in enumerate(items):
                 e=(th[c]/180)**2-(th[a]/180)**2-(th[b]/180)**2
                 col=ATT if e<-1e-9 else (REP if e>1e-9 else NEU)
-                yy=y+0.5+(m-1-2*k)*(0.15 if m==3 else 0.17)
-                ax.text(j+0.5,yy,tex(c)+('  '+frac(p) if m>1 else ''),ha='center',va='center',fontsize=8.3 if m==3 else 8.8,color=col)
+                yy=y+0.5+(m-1-2*k)*(0.16 if m==3 else 0.17)
+                ax.text(j+0.5,yy,tex(c)+(' '+frac(p) if m>1 else ''),ha='center',va='center',fontsize=8.2 if m==3 else 9.0,color=col)
     ax.set_xlim(0,n); ax.set_ylim(0,n)
     ax.set_xticks(np.arange(n)+0.5); ax.set_xticklabels([tex(l) for l in L],fontsize=9.5)
     ax.set_yticks(np.arange(n)+0.5); ax.set_yticklabels([tex(l) for l in L[::-1]],fontsize=9.5)
     ax.xaxis.tick_top(); ax.tick_params(length=0,pad=2)
     for s in ax.spines.values(): s.set_visible(False)
     ax.set_title(title,loc='left',fontsize=9.5,pad=16)
-fig=plt.figure(figsize=(DCOL,6.0))
-gs=fig.add_gridspec(2,2,width_ratios=[6.4,4.6],height_ratios=[3.9,1.3],hspace=0.52,wspace=0.17)
+fig=plt.figure(figsize=(6.9,6.0))
+gs=fig.add_gridspec(2,2,width_ratios=[6.5,4.9],height_ratios=[3.9,1.3],hspace=0.52,wspace=0.17)
 table(fig.add_subplot(gs[0,0]),'2T',r'(a) T phase: $\pi_1=2T$ (24 elements)')
 table(fig.add_subplot(gs[0,1]),'Dic3',r'(b) P/222 phases: $\pi_1=\mathrm{Dic}_3$ (12)')
-fig.text(0.5,0.335,'green: attractive channel ($\\theta_c^2<\\theta_a^2+\\theta_b^2$)    red: repulsive    framed: annihilation possible    shading: 1, 2, 3 channels',ha='center',fontsize=8.8)
+fig.text(0.5,0.335,'green: attractive channel;   red: repulsive;   framed: annihilation possible;   shading: number of channels',ha='center',fontsize=9)
 # (c) annihilation probability
 ax=fig.add_subplot(gs[1,:])
 groups=[(r'C: $\mathbb{Z}_2$',[('1/2',r'$\pi$','1')]),
@@ -55,5 +55,5 @@ for name,items in groups:
 ax.set_xticks(xt); ax.set_xticklabels(xl,fontsize=9)
 ax.set_xlim(-0.8,x-1.2); ax.set_ylim(0,1.12); ax.set_yticks([0,0.5,1])
 ax.set_ylabel(r'$P(a\,\bar a\to1)$')
-ax.set_title(r'(c) probability that a defect and its antidefect annihilate ($=1/|C_a|$ for non-Abelian $\pi_1$; one dot per class)',loc='left',fontsize=9.5)
+ax.set_title(r'(c) annihilation probability of a defect with its antidefect (one dot per class)',loc='left',fontsize=9.5)
 fig.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','fig','fig_fusion.pdf'))
