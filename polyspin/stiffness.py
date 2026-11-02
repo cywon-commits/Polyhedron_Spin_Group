@@ -9,7 +9,7 @@ The stiffness (= rho_s for the per-spacing convention) is  Y = L^-d [ <S2> - bet
 (Y has the dimension of an energy; L^-d divides by the number of bodies).
 """
 import numpy as np
-from numba import njit
+from numba import njit, prange
 
 
 @njit(cache=True)
@@ -98,7 +98,6 @@ def terms_all(spins_all, nbr, p, col):
     R = spins_all.shape[0]
     o1 = np.zeros((R, 4))
     o2 = np.zeros((R, 4))
-    from numba import prange
     for r in prange(R):
         a, b = terms(spins_all[r], nbr, p, col)
         o1[r] = a
