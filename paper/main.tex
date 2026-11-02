@@ -7,6 +7,10 @@
 \newcommand{\Sv}{\mathbf{S}}
 \newcommand{\qv}{\mathbf{q}}
 
+\renewcommand{\dbltopfraction}{0.9}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\textfraction}{0.08}
+\setcounter{dbltopnumber}{2}
 \begin{document}
 
 \title{Deformable polyhedral spin bodies: multipole channel selection, entropic phase ladders, and non-Abelian orientational order}
@@ -44,7 +48,7 @@ We also derive the defect algebra of the tetrahedral phase, and for $n=6$ test a
 The paper is organized as follows. Section~\ref{sec:model} defines the model and the channel decomposition. Section~\ref{sec:T0} derives the zero-temperature phase diagram and exact boundaries. Section~\ref{sec:sym} discusses symmetry, topology, and Landau invariants. Section~\ref{sec:entropy} develops the entropic free energy. Section~\ref{sec:MC} summarizes the Monte Carlo method and Sec.~\ref{sec:results} the results. Section~\ref{sec:n6} gives predictions for $n=6$ and Sec.~\ref{sec:disc} discusses implications.
 
 \begin{figure*}[t]
-\includegraphics[width=\textwidth]{fig/fig_model.pdf}
+\includegraphics[width=0.8\textwidth]{fig/fig_model.pdf}
 \caption{Model. (a) A spin body of $n=4$ spins. Intra-body AF exchange $Jx+Kx^2$ ($x=\Sv_i\cdot\Sv_j$) favors the regular tetrahedron. (b) Bodies on a lattice are coupled by $-\sum_{i,j}[G x^3+H_4 x^4]$ between \emph{all} pairs of spins of neighboring bodies, so the coupling cannot tell which spin is which. (c) Channel spectrum for $J=1$, $K=0.5$, $zG=1$, $zH_4=0.5$: intra coefficients $f_l$, inter coefficients $-zg_l$, and their sum $\kappa_l$. Odd channels ($l=1,3$) carry magnetization; even channels ($l=2,4$) carry nematic order.}
 \label{fig:model}
 \end{figure*}
@@ -88,7 +92,7 @@ Positive $\kappa_l$ spreads the particles (spherical designs~\cite{Delsarte1977}
 Figure~\ref{fig:T0} shows the ground-state phases for $n=4$, obtained by minimizing Eq.~\eqref{eq:Phi} over all configurations, together with the analytic boundaries derived below. Five phases appear: the tetrahedron T ($M=0$, a two-design), a ferrimagnet U (a coincident pair plus two single spins at $120^\circ$, $|M|/n=1/4$ exactly), a bent pair of dimers D, the collinear nematic C ($\uparrow\uparrow\downarrow\downarrow$, $M=0$), and the ferromagnet F. Note that partially collapsed phases (U, D) have no counterpart in rigid-polyhedron models.
 
 \begin{figure*}[t]
-\includegraphics[width=\textwidth]{fig/fig_T0.pdf}
+\includegraphics[width=0.88\textwidth]{fig/fig_T0.pdf}
 \caption{Zero-temperature phases for $n=4$. (a) Channel space with $\kappa_3=-1$, $\kappa_4=0$, from direct minimization (colors) and exact boundaries (black): T--F, Eq.~\eqref{eq:TF} (solid), D--F, Eq.~\eqref{eq:DF} (dashed), and C--D, Eq.~\eqref{eq:CD} (dotted). U$^\prime$ is an umbrella variant of U. (b) Physical plane at $J=1$, $K=0.5$ with T--C (solid), T--F (dashed), and C--F (dotted) boundaries of Table~\ref{tab:phases}. (c) Sketches of the cluster states; $\times k$ marks $k$ coincident spins.}
 \label{fig:T0}
 \end{figure*}
@@ -170,7 +174,23 @@ quartic & 1 & 1 & 2 & 2 & 3\\
 
 \paragraph*{Defect algebra of the T phase.} Lifting $T$ to $SU(2)$ gives the binary tetrahedral group $2T$ of order 24 with seven conjugacy classes. Line defects (or point defects in 2D) are labeled by these classes. In an isotropic-stiffness approximation their energy scales with the square of the rotation angle [Fig.~\ref{fig:defects}]. The $2\pi$ class and the $4\pi/3$ classes are unstable to splitting, so the elementary defects are the eight $2\pi/3$ elements. Non-commuting lines cannot cross freely~\cite{PoenaruToulouse1977,Mermin1979}. For example, the $\pi$ lines about $x$ and $y$ leave a connecting rung with holonomy $[i,j]=-1$. On a periodic lattice the ordered product of plaquette holonomies equals the commutator of the two winding holonomies, so a single non-trivial defect is allowed on a torus. In the Abelian phases U, D ($\mathbb{Z}_4$) and C ($\mathbb{Z}_2$) lines cross freely.
 
+\begin{figure}[tb]
+\includegraphics[width=\columnwidth]{fig/fig_defects.pdf}
+\caption{Defect classes of the T phase, labeled by their rotation angle $\theta$, with line energy $\propto\theta^2$ (isotropic-stiffness estimate). The box lists the energetically favored splittings; the $C_2$ splitting is marginal and depends on elastic anisotropy.}
+\label{fig:defects}
+\end{figure}
+
 \paragraph*{Base space, target space, and dimensionality.} Two spaces enter the coarse-grained description. The field is a map $\phi:\mathbb{R}^d\to\mathcal M$ from the lattice of bodies (the base space, $d=2$ or 3) to the order-parameter manifold $\mathcal M=O(3)/H$, which is fixed by the cluster state. Defects of codimension $k$ in the base space are classified by $\pi_{k-1}(\mathcal M)$ and nonsingular textures by $\pi_d(\mathcal M)$~\cite{Mermin1979}. The same phase therefore hosts different defects in 2D and in 3D (Table~\ref{tab:topo}). In 2D, the geometry of $\mathcal M$ decides what happens at $T>0$. If $\mathcal M$ contained a flat $U(1)$ direction, spin waves would leave quasi-long-range order and vortex unbinding would produce a Kosterlitz--Thouless (KT) transition with a universal stiffness jump~\cite{KosterlitzThouless1973,NelsonKosterlitz1977}. Here the full symmetry is $O(3)$, with no $U(1)$ factor, so every $\mathcal M$ is a homogeneous space of $SO(3)$ with positive curvature. The corresponding 2D sigma models are asymptotically free~\cite{Polyakov1975}: correlations decay exponentially at any $T>0$, with $\xi\propto\exp(c/T)$, consistent with the Mermin--Wagner theorem~\cite{MerminWagner1966}. \emph{No phase of the model has a true KT transition in 2D.} A finite $\pi_1$ still permits a defect-driven topological transition or crossover of the Kawamura--Miyashita type~\cite{KawamuraMiyashita1984}. The only KT-like behavior is a crossover on the C$\to$D line, where the director correlation length exceeds the system size and, within that length, $\mathbf M_\perp$ breaks the $U(1)$ of rotations about the director. In 3D continuous symmetries can break, the transition order follows the Landau counting above, and line defects ($\pi_1$) and, in the C and F phases, hedgehogs ($\pi_2$) appear.
+
+
+
+\paragraph*{Fusion rules in two dimensions.} In 2D a point defect is labeled by the conjugacy class of its holonomy, because carrying it around other defects conjugates the holonomy. Two defects of classes $a$ and $b$ fuse into the class of $g_ag_b$ with $g_a\in a$, $g_b\in b$. For an Abelian $\pi_1$ this product is unique and defects behave as charges of a Coulomb gas, as in the $\mathbb{Z}_2$ (C) and $\mathbb{Z}_4$ (U, D) phases. For a non-Abelian $\pi_1$ the outcome depends on how the two defects were brought together relative to the others. If the relative holonomy is uniform over the class, as for paths randomized by thermal motion, the outcome $c$ occurs with probability $p_{ab}^{\,c}=|\{g\in b:\,g_ag\in c\}|/|b|$. Figure~\ref{fig:fusion} shows these statistical fusion rules for $2T$ and $\mathrm{Dic}_3$, computed exactly from the groups. Three consequences follow. First, a defect and its antidefect annihilate only with probability $1/|C_a|$: $1/4$ for the elementary $2\pi/3$ classes of the T phase and $1/6$ for the $\pi$ class, whose pair otherwise leaves a $\pi$ defect (probability $2/3$) or a $2\pi$ defect ($1/6$). Second, the same pair can fuse through channels of opposite sign of the interaction energy. With line energy $\propto\theta^2$, a channel is attractive when $\theta_c^2<\theta_a^2+\theta_b^2$. Two like $2\pi/3$ vortices ($6^+6^+$) fuse attractively into $6^-$ with probability $3/4$ and repulsively into $3^+$ with probability $1/4$, whereas like vortices of an Abelian Coulomb gas always repel. Third, the central element $-1$ fuses deterministically with every class. The defect gas of the non-Abelian phases is therefore not a Coulomb gas: annihilation is suppressed, and a single unbinding temperature need not exist. This is one reason why the 2D defect-unbinding test (H2) could not be decided with a single-scale detector.
+
+\begin{figure*}[tb]
+\includegraphics[width=\textwidth]{fig/fig_fusion.pdf}
+\caption{Fusion of point defects in two dimensions, computed from the groups (\texttt{scripts/fusion\_rules.py}). (a) T phase, $\pi_1=2T$; classes are labeled by element order: $6^\pm$ ($\theta=2\pi/3$), $4$ ($\pi$), $3^\pm$ ($4\pi/3$), $-1$ ($2\pi$); the identity row and column are omitted. Row $a$ fused with column $b$ gives the listed classes with the listed probabilities for a uniform relative holonomy. Green: attractive channel ($\theta_c^2<\theta_a^2+\theta_b^2$); red: repulsive; framed cells: annihilation possible; shading: one, two, or three channels. (b) Prism and 222 phases, $\pi_1=\mathrm{Dic}_3$. (c) Probability that a defect annihilates with its antidefect, one dot per class: 1 for the Abelian groups, $1/|C_a|$ otherwise.}
+\label{fig:fusion}
+\end{figure*}
 
 \begin{table*}[tb]
 \caption{Order-parameter manifolds $\mathcal M$ and their consequences in two and three dimensions. Codimension-$k$ defects are classified by $\pi_{k-1}(\mathcal M)$: point defects in 2D and lines in 3D by $\pi_1$, hedgehogs in 3D by $\pi_2$; 2D textures by $\pi_2$. NA: non-Abelian. ``Crossover'': no long-range or quasi-long-range order at $T>0$; $\xi\propto\exp(c/T)$.}
@@ -189,22 +209,14 @@ F, M2, M4 & $S^2$ & 2 & 0 & $\mathbb{Z}$ & crossover; skyrmion-like textures & o
 \end{ruledtabular}
 \end{table*}
 
-\paragraph*{Fusion rules in two dimensions.} In 2D a point defect is labeled by the conjugacy class of its holonomy, because carrying it around other defects conjugates the holonomy. Two defects of classes $a$ and $b$ fuse into the class of $g_ag_b$ with $g_a\in a$, $g_b\in b$. For an Abelian $\pi_1$ this product is unique and defects behave as charges of a Coulomb gas, as in the $\mathbb{Z}_2$ (C) and $\mathbb{Z}_4$ (U, D) phases. For a non-Abelian $\pi_1$ the outcome depends on how the two defects were brought together relative to the others. If the relative holonomy is uniform over the class, as for paths randomized by thermal motion, the outcome $c$ occurs with probability $p_{ab}^{\,c}=|\{g\in b:\,g_ag\in c\}|/|b|$. Figure~\ref{fig:fusion} shows these statistical fusion rules for $2T$ and $\mathrm{Dic}_3$, computed exactly from the groups. Three consequences follow. First, a defect and its antidefect annihilate only with probability $1/|C_a|$: $1/4$ for the elementary $2\pi/3$ classes of the T phase and $1/6$ for the $\pi$ class, whose pair otherwise leaves a $\pi$ defect (probability $2/3$) or a $2\pi$ defect ($1/6$). Second, the same pair can fuse through channels of opposite sign of the interaction energy. With line energy $\propto\theta^2$, a channel is attractive when $\theta_c^2<\theta_a^2+\theta_b^2$. Two like $2\pi/3$ vortices ($6^+6^+$) fuse attractively into $6^-$ with probability $3/4$ and repulsively into $3^+$ with probability $1/4$, whereas like vortices of an Abelian Coulomb gas always repel. Third, the central element $-1$ fuses deterministically with every class. The defect gas of the non-Abelian phases is therefore not a Coulomb gas: annihilation is suppressed, and a single unbinding temperature need not exist. This is one reason why the 2D defect-unbinding test (H2) could not be decided with a single-scale detector.
-
-\begin{figure*}[tb]
-\includegraphics[width=\textwidth]{fig/fig_fusion.pdf}
-\caption{Fusion of point defects in two dimensions, computed from the groups (\texttt{scripts/fusion\_rules.py}). (a) T phase, $\pi_1=2T$; classes are labeled by element order: $6^\pm$ ($\theta=2\pi/3$), $4$ ($\pi$), $3^\pm$ ($4\pi/3$), $-1$ ($2\pi$); the identity row and column are omitted. Row $a$ fused with column $b$ gives the listed classes with the listed probabilities for a uniform relative holonomy. Green: attractive channel ($\theta_c^2<\theta_a^2+\theta_b^2$); red: repulsive; framed cells: annihilation possible; shading: one, two, or three channels. (b) Prism and 222 phases, $\pi_1=\mathrm{Dic}_3$. (c) Probability that a defect annihilates with its antidefect, one dot per class: 1 for the Abelian groups, $1/|C_a|$ otherwise.}
-\label{fig:fusion}
-\end{figure*}
-
-\begin{figure}[tb]
-\includegraphics[width=\columnwidth]{fig/fig_defects.pdf}
-\caption{Defect classes of the T phase, labeled by their rotation angle $\theta$, with line energy $\propto\theta^2$ (isotropic-stiffness estimate). The box lists the energetically favored splittings; the $C_2$ splitting is marginal and depends on elastic anisotropy.}
-\label{fig:defects}
-\end{figure}
-
 %=====================================================================
 \section{Entropic selection near the ferro--nematic line}\label{sec:entropy}
+
+\begin{figure}[!htb]
+\includegraphics[width=\columnwidth]{fig/fig_ladder.pdf}
+\caption{Entropic ladder, Eq.~\eqref{eq:ladder}, for the 2D model at $zG=1.1$. Thick segments mark the lower envelope (equilibrium phase); dotted lines are phase boundaries. (a) $n=4$: F$\to$M2$\to$C, boundaries at $u=0.411$ and $0.378$. (b) $n=6$: F$\to$M4$\to$M2$\to$C at $u=0.303$, $0.272$, $0.261$. Open circles on top: boundaries measured by slab coexistence, $u=(zG-J)/T$ ($n=6$: M4 resolved, M2 not); crosses: thermodynamic-integration prediction.}
+\label{fig:ladder}
+\end{figure}
 %=====================================================================
 
 At $zG=J$ the C and F states are degenerate [Eq.~\eqref{eq:CF}], and so is every collinear state with $k$ reversed spins and moment $M=n-2k$. Near this line their energies are exactly
@@ -218,11 +230,7 @@ which is concave in $M$. Two entropic contributions distinguish them. The first 
 \end{align}
 The equilibrium state is the lower envelope of these straight lines [Fig.~\ref{fig:ladder}]. For $n=4$ this envelope contains an intermediate collinear ferrimagnet M2 ($\uparrow\uparrow\uparrow\downarrow$) whenever $4\delta_{\rm M2}<3\delta_C$, which holds. The predicted phase sequence on heating at fixed $zG>J$ is therefore F$\to$M2$\to$C: a \emph{reentrant} nematic phase stabilized by entropy, with the ferromagnet at low temperature.
 
-\begin{figure}[tb]
-\includegraphics[width=\columnwidth]{fig/fig_ladder.pdf}
-\caption{Entropic ladder, Eq.~\eqref{eq:ladder}, for the 2D model at $zG=1.1$. Thick segments mark the lower envelope (equilibrium phase); dotted lines are phase boundaries. (a) $n=4$: F$\to$M2$\to$C, boundaries at $u=0.411$ and $0.378$. (b) $n=6$: F$\to$M4$\to$M2$\to$C at $u=0.303$, $0.272$, $0.261$. Open circles on top: boundaries measured by slab coexistence, $u=(zG-J)/T$ ($n=6$: M4 resolved, M2 not); crosses: thermodynamic-integration prediction.}
-\label{fig:ladder}
-\end{figure}
+
 
 The theory gives three parameter-free predictions for the 2D model at $K=0.5$, $zH_4=1.5$, which we tested:
 (1)~The low-temperature slope of the boundary, $zG^*(T)=J+aT+bT^2$. Harmonic plus label theory gives $a=0.382$ for a direct C$|$F boundary and $a=0.390$ for the F$|$M2 boundary. The label term alone gives $0.224$, and the harmonic term alone gives $0.158$.

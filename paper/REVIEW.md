@@ -56,3 +56,11 @@
 ## 11. 2D 결함 융합 규칙 (Nov 2)
 - 4절에 "Fusion rules in two dimensions" 단락과 그림 `fig_fusion.pdf` 추가. 2T, Dic3, 2O의 통계적 융합 확률은 `scripts/fusion_rules.py`가 군에서 정확히 계산해 `data/fusion.json`에 저장한다(시뮬레이션 없음). 그림은 `scripts/fig_fusion.py`.
 - 아직 할 일: 2D 강성 Υ(L) 측정(점근 자유 교차 대 KT형 교차 판정).
+
+## 12. 그림 크기와 배치 점검 (Nov 2)
+- 그림별 실제 배율(본문 삽입 폭 / 그림 원본 폭)을 1.00–1.17로 맞췄다. 그림 글씨 9 pt가 본문에서 9–10.5 pt가 된다. 이전: fig_model 1.27, fig_T0 1.16(글씨가 본문보다 큼), fig_fusion 0.90, fig_ladder 0.93, fig_H6 0.95(글씨가 작음).
+  - fig_model, fig_T0: 삽입 폭을 0.8, 0.88 \textwidth로.
+  - fig_fusion: 원본 폭 축소, 범례 한 줄로, 칸 글씨 9 pt.
+  - fig_ladder: 범례를 축 안 두 줄(8.8 pt)로, 높이 4.3 in(떠다님 지연 해소), n=6 측정 기호 위치 조정.
+  - fig_H6: 범례 글씨 7.2 → 8.6 pt, 한 줄씩.
+- 배치: 그림 번호가 본문 인용 순서와 어긋나던 문제(fusion이 defects보다 앞 번호) 수정. 차원·융합 블록을 defects 그림 뒤로 옮기고, 표(𝓜, π₁, π₂)를 fusion 그림 뒤로 두어 두 전체폭 개체가 6–7쪽에 나뉘어 들어가게 했다. 사다리 그림(그림 6)이 인용 2쪽 뒤에 오던 것을 1쪽 차이로 줄였다(5절 시작으로 이동). 떠다님 매개변수(dbltopfraction 0.9 등) 완화.

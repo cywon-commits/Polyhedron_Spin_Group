@@ -2,7 +2,7 @@
 final estimators (paper/data/wedge.json) with the thermodynamic-integration predictions."""
 from style import *; import numpy as np, json
 H = json.load(open('../data/H6_points.json')); W = json.load(open('../data/wedge.json'))
-fig, ax = plt.subplots(figsize=(COL, 3.0))
+fig, ax = plt.subplots(figsize=(3.3, 3.0))
 def Tb(s0, s1):
     zg = np.linspace(1.0, 1.13, 300); s = s0 + (s1 - s0) * (zg - 1.0) / 0.1; return zg, (zg - 1.0) / s
 zg, t1 = Tb(0.3899, 0.1 / 0.2431); ax.plot(zg, t1, '-', color=C['F'], lw=1.1, label='F|M2 (harm.+label)')
@@ -27,5 +27,5 @@ ax.plot([], [], 'o', color='0.3', ms=5, mfc='white', label='wedge, 2D slab ($zG=
 ax.text(1.003, 0.262, 'C', fontsize=11, color=C['C']); ax.text(1.085, 0.10, 'F', fontsize=11, color=C['F']); ax.annotate('M2 wedge', xy=(1.0985, 0.245), xytext=(1.052, 0.268), fontsize=8.5, color='#B8860B', arrowprops=dict(arrowstyle='-', lw=0.6, color='#B8860B'))
 ax.set_xlim(1.0, 1.145); ax.set_ylim(0, 0.29)
 ax.set_xlabel(r'$zG$ ($J=1$)'); ax.set_ylabel(r'$T$')
-ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.17), ncol=2, fontsize=7.2, handletextpad=0.3, columnspacing=0.9)
+ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.17), ncol=1, fontsize=8.6, handletextpad=0.4, labelspacing=0.25)
 fig.savefig('../fig/fig_H6.pdf')
