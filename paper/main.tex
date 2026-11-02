@@ -170,6 +170,25 @@ quartic & 1 & 1 & 2 & 2 & 3\\
 
 \paragraph*{Defect algebra of the T phase.} Lifting $T$ to $SU(2)$ gives the binary tetrahedral group $2T$ of order 24 with seven conjugacy classes. Line defects (or point defects in 2D) are labeled by these classes. In an isotropic-stiffness approximation their energy scales with the square of the rotation angle [Fig.~\ref{fig:defects}]. The $2\pi$ class and the $4\pi/3$ classes are unstable to splitting, so the elementary defects are the eight $2\pi/3$ elements. Non-commuting lines cannot cross freely~\cite{PoenaruToulouse1977,Mermin1979}. For example, the $\pi$ lines about $x$ and $y$ leave a connecting rung with holonomy $[i,j]=-1$. On a periodic lattice the ordered product of plaquette holonomies equals the commutator of the two winding holonomies, so a single non-trivial defect is allowed on a torus. In the Abelian phases U, D ($\mathbb{Z}_4$) and C ($\mathbb{Z}_2$) lines cross freely.
 
+\paragraph*{Base space, target space, and dimensionality.} Two spaces enter the coarse-grained description. The field is a map $\phi:\mathbb{R}^d\to\mathcal M$ from the lattice of bodies (the base space, $d=2$ or 3) to the order-parameter manifold $\mathcal M=O(3)/H$, which is fixed by the cluster state. Defects of codimension $k$ in the base space are classified by $\pi_{k-1}(\mathcal M)$ and nonsingular textures by $\pi_d(\mathcal M)$~\cite{Mermin1979}. The same phase therefore hosts different defects in 2D and in 3D (Table~\ref{tab:topo}). In 2D, the geometry of $\mathcal M$ decides what happens at $T>0$. If $\mathcal M$ contained a flat $U(1)$ direction, spin waves would leave quasi-long-range order and vortex unbinding would produce a Kosterlitz--Thouless (KT) transition with a universal stiffness jump~\cite{KosterlitzThouless1973,NelsonKosterlitz1977}. Here the full symmetry is $O(3)$, with no $U(1)$ factor, so every $\mathcal M$ is a homogeneous space of $SO(3)$ with positive curvature. The corresponding 2D sigma models are asymptotically free~\cite{Polyakov1975}: correlations decay exponentially at any $T>0$, with $\xi\propto\exp(c/T)$, consistent with the Mermin--Wagner theorem~\cite{MerminWagner1966}. \emph{No phase of the model has a true KT transition in 2D.} A finite $\pi_1$ still permits a defect-driven topological transition or crossover of the Kawamura--Miyashita type~\cite{KawamuraMiyashita1984}. The only KT-like behavior is a crossover on the C$\to$D line, where the director correlation length exceeds the system size and, within that length, $\mathbf M_\perp$ breaks the $U(1)$ of rotations about the director. In 3D continuous symmetries can break, the transition order follows the Landau counting above, and line defects ($\pi_1$) and, in the C and F phases, hedgehogs ($\pi_2$) appear.
+
+\begin{table*}[tb]
+\caption{Order-parameter manifolds $\mathcal M$ and their consequences in two and three dimensions. Codimension-$k$ defects are classified by $\pi_{k-1}(\mathcal M)$: point defects in 2D and lines in 3D by $\pi_1$, hedgehogs in 3D by $\pi_2$; 2D textures by $\pi_2$. NA: non-Abelian. ``Crossover'': no long-range or quasi-long-range order at $T>0$; $\xi\propto\exp(c/T)$.}
+\label{tab:topo}
+\begin{ruledtabular}
+\begin{tabular}{llcllll}
+Phase & $\mathcal M$ & $\dim\mathcal M$ & $\pi_1$ & $\pi_2$ & $d=2$, $T>0$ & $d=3$\\
+\hline
+T ($n=4$) & $SO(3)/T$ & 3 & $2T$ & 0 & crossover; NA point vortices & order; NA lines\\
+P, 222 ($n=6$) & $SO(3)/D_3$ & 3 & $\mathrm{Dic}_3$ & 0 & crossover; NA point vortices & order; NA lines\\
+O ($n=6$) & $SO(3)/O$ & 3 & $2O$ & 0 & crossover; NA point vortices & order; NA lines\\
+U, D & $SO(3)/C_2$ & 3 & $\mathbb{Z}_4$ & 0 & crossover; $\mathbb{Z}_4$ vortices & order; $\mathbb{Z}_4$ lines\\
+C & $RP^2$ & 2 & $\mathbb{Z}_2$ & $\mathbb{Z}$ & crossover; half vortices, textures & order; half-vortex lines, hedgehogs\\
+F, M2, M4 & $S^2$ & 2 & 0 & $\mathbb{Z}$ & crossover; skyrmion-like textures & order; hedgehogs\\
+\end{tabular}
+\end{ruledtabular}
+\end{table*}
+
 \begin{figure}[tb]
 \includegraphics[width=\columnwidth]{fig/fig_defects.pdf}
 \caption{Defect classes of the T phase, labeled by their rotation angle $\theta$, with line energy $\propto\theta^2$ (isotropic-stiffness estimate). The box lists the energetically favored splittings; the $C_2$ splitting is marginal and depends on elastic anisotropy.}
@@ -305,7 +324,7 @@ The U phase, a dimer plus two single spins with $|M|/n=1/4$, is found at finite 
 
 \subsection{Defects}
 
-In 2D the octupole correlation function decays algebraically over the accessible sizes. Because the $SO(3)/T$ sigma model is asymptotically free~\cite{Polyakov1975}, we interpret this as a crossover with a correlation length that grows like $\exp(c/T)$, not as quasi-long-range order. Defects of the $2T$ classes are detected reliably at low temperature. Near the crossover, however, the frame of individual bodies becomes ill defined before defects proliferate, and a scale-ratio test of defect unbinding is undecidable at our resolution (H2). In 3D the frame and the defects disappear together at the first-order transitions, as expected.
+In 2D the octupole correlation function decays algebraically over the accessible sizes. Because the $SO(3)/T$ sigma model is asymptotically free~\cite{Polyakov1975} and no phase of this $O(3)$ model can have quasi-long-range order in 2D (Sec.~\ref{sec:sym}, Table~\ref{tab:topo}), we interpret this as a crossover with a correlation length that grows like $\exp(c/T)$, not as quasi-long-range order. Defects of the $2T$ classes are detected reliably at low temperature. Near the crossover, however, the frame of individual bodies becomes ill defined before defects proliferate, and a scale-ratio test of defect unbinding is undecidable at our resolution (H2). In 3D the frame and the defects disappear together at the first-order transitions, as expected.
 
 %=====================================================================
 \section{Predictions for six-spin bodies}\label{sec:n6}
@@ -331,7 +350,12 @@ The entropic ladder of Eq.~\eqref{eq:ladder} for $n=6$ contains all four colline
 
 \paragraph*{What is new.} Three features distinguish spin bodies from rigid polyhedra. First, couplings act channel by channel, and the parity of the channel decides whether a body can only magnetize or only align. This turns a many-parameter problem into a few exact inequalities [Eqs.~\eqref{eq:CF}--\eqref{eq:DF}]. Second, collapse produces phases with no rigid analog: partially merged ferrimagnets (U, D) and collinear states whose relative weights are set by a counting entropy. The resulting ladder is a simple and quantitative example of order by disorder~\cite{Villain1980,Henley1989} in which a discrete label entropy and the spin-wave entropy contribute comparably; both are needed to obtain the measured slope. Third, the transition order follows the Landau counting of invariants of the relevant multipole rather than a generic rule for polyhedral order.
 
-\paragraph*{Where the model meets experiment.} The classical limit is natural when each ``spin'' is a mesoscopic moment, as in artificial spin systems and nanomagnet arrays~\cite{Heyderman2013,Skjaervo2020}. There, the dipolar interaction between elements contains exactly the multipole structure of Eq.~\eqref{eq:channel}, and clusters of elements can be engineered with strong internal coupling. The cluster-multipole description of noncollinear antiferromagnets~\cite{Suzuki2017} and breathing pyrochlores~\cite{Okamoto2013,Rau2016} provides materials in which the channel selection rules may be tested directly.
+\paragraph*{Where the model meets experiment.} The classical limit is natural when each ``spin'' is a mesoscopic moment, as in artificial spin systems and nanomagnet arrays~\cite{Heyderman2013,Skjaervo2020}. There, the dipolar interaction between elements contains exactly the multipole structure of Eq.~\eqref{eq:channel}, and clusters of elements can be engineered with strong internal coupling. The cluster-multipole description of noncollinear antiferromagnets~\cite{Suzuki2017} and breathing pyrochlores~\cite{Okamoto2013,Rau2016} provides materials in which the channel selection rules may be tested directly. Many artificial spin systems are, however, planar because of shape anisotropy, and this changes the 2D physics qualitatively. Confining the spins to a plane reduces $O(3)$ to $O(2)$. With a higher-order intra-body term selecting the regular $n$-gon (a circular design), an indistinguishable inter-body coupling then gives $\mathcal M=U(1)/\mathbb{Z}_k$ with $k=n$, which is flat. A genuine KT transition follows, mediated by fractional vortices of winding $2\pi/k$. Balancing their energy $\pi\rho\,k^{-2}\ln(R/a)$ against the entropy $2T\ln(R/a)$ gives
+\begin{equation}
+T_{\rm KT}=\frac{\pi\rho}{2k^2},
+\label{eq:TKT}
+\end{equation}
+where $\rho$ is the orientational stiffness of the bodies. Because only the lowest circular harmonic compatible with the polygon couples neighboring bodies, $\rho$ is itself fixed by the channel decomposition. The chain polygon symmetry $\to$ coupling channel $\to$ stiffness $\to$ $T_{\rm KT}$ is a direct prediction for planar arrays of nanomagnet clusters.
 
 \paragraph*{Limitations.} All analytic predictions rest on the uniform-state theorem (exact at $T=0$) and on low-temperature expansions. Size dependence was checked with two or three sizes, 3D wedge positions with one slab size, and the $n=6$ ladder with one size and three seeds; the anharmonic integral uses chains smaller than the slabs. The order of the octupolar transition at $zG=0.5$ remains open.
 
@@ -375,6 +399,10 @@ For a uniform collinear state with $k$ reversed spins, the quadratic Hamiltonian
 \bibitem{ChallaLandauBinder1986} M. S. S. Challa, D. P. Landau, and K. Binder, Phys. Rev. B \textbf{34}, 1841 (1986).
 \bibitem{Kabsch1976} W. Kabsch, Acta Crystallogr. A \textbf{32}, 922 (1976).
 \bibitem{Polyakov1975} A. M. Polyakov, Phys. Lett. B \textbf{59}, 79 (1975).
+\bibitem{KosterlitzThouless1973} J. M. Kosterlitz and D. J. Thouless, J. Phys. C \textbf{6}, 1181 (1973).
+\bibitem{NelsonKosterlitz1977} D. R. Nelson and J. M. Kosterlitz, Phys. Rev. Lett. \textbf{39}, 1201 (1977).
+\bibitem{MerminWagner1966} N. D. Mermin and H. Wagner, Phys. Rev. Lett. \textbf{17}, 1133 (1966).
+\bibitem{KawamuraMiyashita1984} H. Kawamura and S. Miyashita, J. Phys. Soc. Jpn. \textbf{53}, 4138 (1984).
 \bibitem{Villain1980} J. Villain, R. Bidaux, J.-P. Carton, and R. Conte, J. Phys. (Paris) \textbf{41}, 1263 (1980).
 \bibitem{Henley1989} C. L. Henley, Phys. Rev. Lett. \textbf{62}, 2056 (1989).
 \bibitem{Heyderman2013} L. J. Heyderman and R. L. Stamps, J. Phys.: Condens. Matter \textbf{25}, 363201 (2013).

@@ -14,3 +14,6 @@ Fel PRE 52, 702 (1995)(다른 논문의 참고문헌이 같은 권·쪽·쪽 범
 - **Villain–Bidaux–Carton–Conte, J. Phys. (Paris) 41, 1263 (1980)**: 두 번의 검색이 모두 이 논문을 찾지 못했다. 서지는 기억과 통상의 인용 형식에 근거한다.
 - **Espinosa–Sanz–Valeriani–Vega, J. Chem. Phys. 139, 144502 (2013)**: 저자·권(139)·호(14)·DOI(10.1063/1.4823499)·연도는 확인했으나 논문 번호 144502는 검색에 나타나지 않았다.
 이 세 건은 Crossref(`https://api.crossref.org/works/<DOI>`)나 출판사 페이지에서 한 번 열어 확인하면 끝난다.
+
+## 추가 (Nov 2, 차원 논의 반영) — 서지 미확인
+Kosterlitz–Thouless, J. Phys. C 6, 1181 (1973); Nelson–Kosterlitz, PRL 39, 1201 (1977); Mermin–Wagner, PRL 17, 1133 (1966); Kawamura–Miyashita, JPSJ 53, 4138 (1984). 널리 쓰이는 인용 형식이지만 이 세션에서 출판사 기록과 대조하지 않았다.
