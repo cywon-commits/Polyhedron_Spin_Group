@@ -59,6 +59,7 @@ def main():
     np.savez(out, T=temps, L=L, N=N, point=a.point, phase=phase, seed=seed, n_equil=n_eq, n_meas=n_ms, every=a.every, swap_rates=pt.swap_rates(),
              round_trips=pt.round_trips, **S, E=E)
     if ck.exists(): ck.unlink()
+    from stiff_blocks import compact; compact(out)
     print(f"done {out}  R={R}  swap min {pt.swap_rates().min():.2f}  round trips {pt.round_trips}  {time.time() - t0:.0f}s", flush=True)
 
 

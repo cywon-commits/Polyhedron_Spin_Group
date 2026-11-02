@@ -13,11 +13,9 @@ TPEAK_A = 0.21425
 GRID = {"A": [f * TPEAK_A for f in (0.6, 0.7, 0.8, 0.9, 1.0)], "B": [round(0.10 + 0.01 * i, 2) for i in range(17)]}
 
 
-def ups_blocks(z, t, col="x", axes=(0, 1, 2)):
-    """per-block sums for temperature index t: returns arrays (NB, 4) of mean S2 and mean S1^2."""
-    S1, S2 = z["S1" + col][:, t, :], z["S2" + col][:, t, :]
-    idx = np.array_split(np.arange(len(S1)), NB)
-    return np.array([S2[i].mean(0) for i in idx]), np.array([(S1[i] ** 2).mean(0) for i in idx])
+def ups_blocks(z, t, col="x"):
+    """block means (NB, 4) of S2 and S1^2 at temperature index t, from the compact *_blocks.npz file."""
+    return z["S2" + col][:, t, :], z["S1sq" + col][:, t, :]
 
 
 def boot(z, t, which, col="x"):
@@ -38,7 +36,7 @@ out = dict(estimator="block bootstrap (20 blocks, 2000 draws) 16-84% half-width 
 for point, which in (("A", "axis"), ("B", "dir")):
     zs = {}
     for L in LS:
-        p = ROOT / f"data/stage2/stiff_{point}_L{L}.npz"
+        p = ROOT / f"data/stage2/stiff_{point}_L{L}_blocks.npz"
         if p.exists(): zs[L] = np.load(p)
     if len(zs) < 3:
         print(f"point {point}: runs missing for L = {[L for L in LS if L not in zs]}"); continue

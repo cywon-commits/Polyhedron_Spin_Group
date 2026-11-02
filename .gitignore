@@ -12,3 +12,7 @@ paper/*.out
 paper/*.bib
 paper/*.bbl
 paper/*.blg
+
+# stiffness raw per-sample files (tens of MB each; the compact *_blocks.npz are committed)
+data/stage2/stiff_?_L??.npz
+data/stage2/*.ckpt.npz*
