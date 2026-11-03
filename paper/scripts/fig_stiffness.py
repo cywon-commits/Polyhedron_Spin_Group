@@ -9,7 +9,15 @@ for L in (16, 24, 32):
     ax.fill_between(T[m] / TP, (y - 2 * e)[m], (y + 2 * e)[m], color=SEQ[L], alpha=0.25, lw=0)
     ax.plot(T[m] / TP, y[m], '-o', color=SEQ[L], ms=2.5, lw=1.2, label=f'$L={L}$')
 for g in A['grid_T']: ax.axvline(g / TP, color='0.85', lw=0.6, zorder=0)
-ax.set_xlabel(r'$T/T_{\rm peak}$'); ax.set_ylabel(r'$\Upsilon$ (axis average)'); ax.set_xlim(0.58, 1.02)
+ax.set_xlabel(r'$T/T_{\rm peak}$'); ax.set_ylabel(r'$\Upsilon$ (axis average)'); ax.set_xlim(0.58, 1.02); ax.set_ylim(0.3, 4.1)
+ins = ax.inset_axes([0.47, 0.62, 0.50, 0.34]); mm = (T >= 0.6 * TP - 1e-9) & (T <= 0.9 * TP + 1e-9)
+y16 = np.array(A['L']['16']['Y']); e16 = np.array(A['L']['16']['err'])
+for L in (24, 32):
+    yL = np.array(A['L'][str(L)]['Y']); eL = np.array(A['L'][str(L)]['err'])
+    q = (y16 - yL) / T; sq = np.hypot(e16, eL) / T
+    ins.fill_between(T[mm] / TP, (q - sq)[mm], (q + sq)[mm], color=SEQ[L], alpha=0.25, lw=0); ins.plot(T[mm] / TP, q[mm], '-', color=SEQ[L], lw=1.1)
+ins.axhline(0, color='0.7', lw=0.6); ins.set_xlim(0.6, 0.9)
+ins.set_xlabel(r'$T/T_{\rm peak}$', fontsize=8, labelpad=1); ins.set_ylabel(r'$(\Upsilon_{16}-\Upsilon_L)/T$', fontsize=8, labelpad=1); ins.tick_params(labelsize=8)
 ax.legend(loc='lower left', fontsize=8.5, handlelength=1.2)
 ax.set_title(r'(a) T phase, cut A ($zG=1$)', loc='left', fontsize=9.5)
 ax = axs[1]; B = D['B']; T = np.array(B['T']); ax.plot(T, 2 * T / np.pi, 'k--', lw=1.0)
