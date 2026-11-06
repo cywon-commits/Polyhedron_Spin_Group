@@ -2,9 +2,11 @@
 
 H = sum_a sum_{i<j} [J x + K x^2 + L x^4]_{aa}
     - sum_<ab> sum_{i,j} [G x^3 + H4 x^4 + G1 x]_{ab},   x = S_ai . S_bj
+    + sum_a sum_i [a2 P2(z . S_ai) + a4 P4(z . S_ai)]          (single-spin uniaxial anisotropy)
 
 Spins are stored as an array of shape (N, n, 3).  Numba kernels receive the
-couplings as the float array ``p = [J, K, L, G, H4, G1]``.
+couplings as the float array ``p = [J, K, L, G, H4, G1, a2, a4]``.  The anisotropy (lab axis z)
+defaults to a2 = a4 = 0; kernels also accept the 6-entry array of earlier versions (no anisotropy).
 """
 from dataclasses import dataclass
 
@@ -22,6 +24,8 @@ class Params:
     G1: float = 0.0
     z: int = 4
     n: int = 4
+    a2: float = 0.0
+    a4: float = 0.0
 
     @classmethod
     def from_z(cls, zG=0.0, zH4=0.0, z=4, **kw):
@@ -37,7 +41,8 @@ class Params:
         return self.z * self.H4
 
     def array(self):
-        return np.array([self.J, self.K, self.L, self.G, self.H4, self.G1], dtype=np.float64)
+        return np.array([self.J, self.K, self.L, self.G, self.H4, self.G1, self.a2, self.a4],
+                        dtype=np.float64)
 
 
 # ----------------------------------------------------------------- pair terms
@@ -53,6 +58,15 @@ def g_pair(x, p):
     return p[3] * x2 * x + p[4] * x2 * x2 + p[5] * x
 
 
+@njit(cache=True, inline="always")
+def v_single(sz, p):
+    """Single-spin anisotropy a2 P2(sz) + a4 P4(sz), sz = z . S (0 for a 6-entry p)."""
+    if p.shape[0] < 8:
+        return 0.0
+    c2 = sz * sz
+    return p[6] * (1.5 * c2 - 0.5) + p[7] * ((35.0 * c2 * c2 - 30.0 * c2 + 3.0) * 0.125)
+
+
 # --------------------------------------------------------------- total energy
 @njit(cache=True)
 def energy_total(spins, nbr, p):
@@ -61,6 +75,7 @@ def energy_total(spins, nbr, p):
     e = 0.0
     for a in range(N):
         for i in range(n):
+            e += v_single(spins[a, i, 2], p)
             for j in range(i + 1, n):
                 x = (spins[a, i, 0] * spins[a, j, 0] + spins[a, i, 1] * spins[a, j, 1]
                      + spins[a, i, 2] * spins[a, j, 2])
@@ -79,9 +94,9 @@ def energy_total(spins, nbr, p):
 @njit(cache=True)
 def spin_energy(spins, nbr, p, a, i, sx, sy, sz):
     """Energy terms that involve spin (a,i) if it pointed along (sx,sy,sz):
-    n-1 intra-cluster pairs plus n pairs per neighbouring cluster."""
+    n-1 intra-cluster pairs, n pairs per neighbouring cluster, and its single-spin anisotropy."""
     n = spins.shape[1]
-    e = 0.0
+    e = v_single(sz, p)
     for j in range(n):
         if j != i:
             x = sx * spins[a, j, 0] + sy * spins[a, j, 1] + sz * spins[a, j, 2]
@@ -97,9 +112,13 @@ def spin_energy(spins, nbr, p, a, i, sx, sy, sz):
 @njit(cache=True)
 def cluster_inter_energy(spins, nbr, p, a, rows):
     """Inter-site energy between cluster ``a`` (taken to have spins ``rows``,
-    shape (n,3)) and its neighbours.  Intra-cluster energy is not included."""
+    shape (n,3)) and its neighbours, plus the single-spin anisotropy of ``rows``.
+    The intra-cluster pair energy is not included (it is invariant under the rigid rotations
+    for which this function is used; the anisotropy is not, hence it is included)."""
     n = spins.shape[1]
     e = 0.0
+    for i in range(n):
+        e += v_single(rows[i, 2], p)
     for k in range(nbr.shape[1]):
         b = nbr[a, k]
         for i in range(n):

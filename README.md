@@ -26,6 +26,10 @@ Keys are documented in the docstring of `polyspin/run.py`.  Conventions: input c
 first-order transitions, see docs/M3_report.md), `init: random` is the unbiased start.  Compare both
 with `tools/compare_inits.py` — disagreement marks non-equilibrated temperatures.
 
+Single-spin uniaxial anisotropy (Paper II, branch `anisotropy-extension`, tag `v0.2.0-aniso`): model keys
+`a2`, `a4` add V = sum_i [a2 P2(z.S_i) + a4 P4(z.S_i)] (default 0, i.e. the Paper I Hamiltonian);
+see `polyspin/tests/test_anisotropy.py` and `groundstate.gamma_formula`.
+
 Modes: `mode: hysteresis` (quasi-static sweep at fixed T, `polyspin/run.py:run_hysteresis`) and the
 C|F slab coexistence (`polyspin/slab.py`).
 

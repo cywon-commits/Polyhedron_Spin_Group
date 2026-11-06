@@ -6,6 +6,7 @@ Configuration (all keys optional except lattice/model/temperatures):
     name: A_2d_L16_zG0.5
     lattice:   {dim: 2, size: 16}
     model:     {J: 1.0, K: 0.5, L: 0.0, zG: 0.5, zH4: 0.0, G1: 0.0}      # zG = z*G, zH4 = z*H4
+               # optional single-spin anisotropy about lab z: a2, a4 (V = a2 P2(z.S) + a4 P4(z.S), default 0)
     temperatures: {Tmin: 0.02, Tmax: 1.2, n: 48, spacing: log}             # or list: [..]
     sampling:  {n_equil: 20000, n_meas: 20000, sweeps_per_exchange: 1, meas_every: 1,
                 diag_every: 100, tune_every: 200, checkpoint_minutes: 20}
@@ -81,7 +82,8 @@ def make_temperatures(spec):
 def make_params(cfg, lat):
     m = cfg["model"]
     return Params.from_z(zG=m.get("zG", 0.0), zH4=m.get("zH4", 0.0), z=lat.z, J=m.get("J", 1.0),
-                         K=m.get("K", 0.5), L=m.get("L", 0.0), G1=m.get("G1", 0.0))
+                         K=m.get("K", 0.5), L=m.get("L", 0.0), G1=m.get("G1", 0.0),
+                         a2=m.get("a2", 0.0), a4=m.get("a4", 0.0))
 
 
 def git_info():

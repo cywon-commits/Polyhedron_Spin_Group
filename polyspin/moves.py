@@ -2,7 +2,8 @@
 
 Move set (one sweep = every spin tried once + every cluster rotated once):
   * single-spin Gaussian step
-  * rigid SO(3) rotation of a whole cluster (intra-cluster energy unchanged)
+  * rigid SO(3) rotation of a whole cluster (intra-cluster energy unchanged; the single-spin
+    anisotropy changes and is part of cluster_inter_energy)
   * overlap/split: independence proposal that either re-draws a spin uniformly
     on the sphere or places it near another spin of the same cluster
     (von Mises-Fisher, concentration kappa).  Acceptance uses the exact

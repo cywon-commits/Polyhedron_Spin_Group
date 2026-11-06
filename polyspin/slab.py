@@ -77,7 +77,7 @@ def interface_velocity(ts, frac_F, skip=0.3):
 def cubic_energy_per_cluster(spins, nbr, params: Params):
     """E3/N: the G x^3 inter-cluster term (all other couplings switched off).  The Hamiltonian is linear in G, so
     d H / d zG = E3 / zG exactly (used in the Clausius-Clapeyron slope of the C|F boundary)."""
-    p3 = np.array([0.0, 0.0, 0.0, params.G, 0.0, 0.0])
+    p3 = np.array([0.0, 0.0, 0.0, params.G, 0.0, 0.0, 0.0, 0.0])
     return energy_total(spins, nbr, p3) / len(spins)
 
 

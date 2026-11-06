@@ -1,5 +1,11 @@
 """T=0 single-cluster minimisation (valid for the whole lattice by the uniform
-state theorem when all kappa-channel couplings g_l >= 0)."""
+state theorem when all kappa-channel couplings g_l >= 0).
+
+Single-spin anisotropy V = sum_i [a2 P2(z.S_i) + a4 P4(z.S_i)] is a site term, so the uniform-state
+reduction still holds and V is simply added to the cluster energy (``aniso = (a2, a4)``).
+``minimize_cluster_at_orientation`` relaxes the cluster shape at a FIXED body orientation (Eckart
+condition sum_i S0_i x S_i = 0); it gives the orientation dependence E(n) of docs Gamma formula.
+"""
 import numpy as np
 from scipy.optimize import minimize
 
@@ -7,7 +13,7 @@ from .model import (Params, channel_A, channel_coeffs, legendre, legendre_deriv,
                     tetrahedron)
 
 
-def _energy_grad(v, kappa, const, n):
+def _energy_grad(v, kappa, const, n, aniso=(0.0, 0.0)):
     V = v.reshape(n, 3)
     nr = np.linalg.norm(V, axis=1, keepdims=True)
     S = V / nr
@@ -19,8 +25,18 @@ def _energy_grad(v, kappa, const, n):
         W += kappa[l - 1] * legendre_deriv(l, X)
     np.fill_diagonal(W, 0.0)
     gS = W @ S
+    a2, a4 = aniso
+    if a2 or a4:
+        cz = S[:, 2]
+        e += float((a2 * legendre(2, cz) + a4 * legendre(4, cz)).sum())
+        gS = gS.copy()
+        gS[:, 2] += a2 * legendre_deriv(2, cz) + a4 * legendre_deriv(4, cz)
     gV = (gS - np.sum(gS * S, axis=1, keepdims=True) * S) / nr
     return e, gV.ravel()
+
+
+def anisotropy(P: Params):
+    return (float(getattr(P, "a2", 0.0)), float(getattr(P, "a4", 0.0)))
 
 
 def minimize_kappa(kappa, const, S0):
@@ -36,12 +52,59 @@ def minimize_kappa(kappa, const, S0):
 def minimize_cluster(P: Params, S0):
     kappa, const = channel_coeffs(P)
     n = P.n
-    res = minimize(_energy_grad, np.asarray(S0, float).ravel(), args=(kappa, const, n),
+    res = minimize(_energy_grad, np.asarray(S0, float).ravel(), args=(kappa, const, n, anisotropy(P)),
                    jac=True, method="L-BFGS-B",
                    options=dict(maxiter=5000, ftol=1e-15, gtol=1e-11, maxcor=30))
     V = res.x.reshape(n, 3)
     S = V / np.linalg.norm(V, axis=1, keepdims=True)
     return float(res.fun), S
+
+
+def minimize_cluster_at_orientation(P: Params, S0, tol=1e-14):
+    """Relax the cluster shape with its orientation held at that of S0 (unit rows): minimise the
+    uniform-state cluster energy + anisotropy subject to the Eckart condition sum_i S0_i x S_i = 0,
+    which removes the three rigid rotations.  Returns (E, S)."""
+    from scipy.optimize import minimize as _min
+    kappa, const = channel_coeffs(P)
+    n = P.n; S0 = np.asarray(S0, float); an = anisotropy(P)
+    f = lambda v: _energy_grad(v, kappa, const, n, an)
+
+    def cons(v):
+        V = v.reshape(n, 3); S = V / np.linalg.norm(V, axis=1, keepdims=True)
+        return np.cross(S0, S).sum(0)
+
+    res = _min(f, S0.ravel(), jac=True, method="SLSQP", constraints=[dict(type="eq", fun=cons)],
+               options=dict(maxiter=1000, ftol=tol))
+    V = res.x.reshape(n, 3)
+    return float(res.fun), V / np.linalg.norm(V, axis=1, keepdims=True)
+
+
+def gamma_formula(P: Params):
+    """Gamma = (35/9) a4 + 2 a2^2 (3/lam_E - 1/lam_T2) with Phi(x) = sum_l kappa_l P_l(x) (uniform
+    state): lam_E = (8/3) Phi''(-1/3), lam_T2 = (8/9) [3 Phi'(-1/3) + 2 Phi''(-1/3)].
+    E_eff(n) = -Gamma sum_alpha n_alpha^4 + const, n = lab z in the body (S4-axis) frame."""
+    kappa, _ = channel_coeffs(P)
+    x = -1.0 / 3.0
+    d1 = sum(k * float(legendre_deriv(l, x)) for l, k in zip((1, 2, 3, 4), kappa))
+    d2 = sum(k * _legendre_dd(l, x) for l, k in zip((1, 2, 3, 4), kappa))
+    lam_E = 8.0 / 3.0 * d2
+    lam_T2 = 8.0 / 9.0 * (3 * d1 + 2 * d2)
+    a2, a4 = anisotropy(P)
+    return 35.0 / 9.0 * a4 + 2 * a2 ** 2 * (3 / lam_E - 1 / lam_T2), lam_E, lam_T2
+
+
+def _legendre_dd(l, x):
+    return {1: 0.0, 2: 3.0, 3: 15.0 * x, 4: 0.5 * (105.0 * x * x - 15.0)}[l]
+
+
+def oriented_tetrahedron(nhat, spin=0.0):
+    """Tetrahedron (body S4 axes = lab axes before rotation) rotated so that the body-frame unit
+    vector ``nhat`` points along lab z; ``spin`` rotates further about lab z."""
+    from scipy.spatial.transform import Rotation as Rot
+    nhat = np.asarray(nhat, float) / np.linalg.norm(nhat)
+    R1, _ = Rot.align_vectors([[0, 0, 1]], [nhat])
+    R = Rot.from_rotvec([0, 0, spin]) * R1
+    return R.apply(tetrahedron())
 
 
 def _rand_unit(rng, k=1):
